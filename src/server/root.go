@@ -5,5 +5,5 @@ import (
 )
 
 func Run() {
-	fmt.Println("Hello from server!")
+	fmt.Println("Hello from Server!")
 }
