@@ -82,7 +82,8 @@ func Run(host string, port string) {
 		case line == "":
 		default:
 			// log.Println("you said:", strconv.Quote(line))
-            writeToConn(conn)
+            writeToConn(conn, line)
+            // fmt.Println(line.)
 		}
 	}
 exit:
@@ -90,9 +91,9 @@ exit:
     conn.Close()
 }
 
-func writeToConn(conn net.Conn) {
-    conn.Write([]byte("hello server\n"))
-
+func writeToConn(conn net.Conn, line string) {
+    var buffer = []byte(line + "\n")
+    conn.Write(buffer)
     // buffer := make([]byte, 1024)
     // _, err := conn.Read(buffer)
     // if err != nil {
