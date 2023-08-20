@@ -62,20 +62,31 @@ func Run(host string, port string) {
 
 		line = strings.TrimSpace(line)
 		switch {
-            case line == "help":
+			case line == "exit":
+				goto exit
+			case line == "help":
                 usage(l.Stderr())
-            case line == "exit":
-                goto exit
+			case line == "status":
+				get_status(conn)
             case line == "":
             default:
-                // log.Println("you said:", strconv.Quote(line))
                 writeToConn(conn, line)
-                // fmt.Println(line.)
 		}
 	}
 exit:
     // writeToConn(conn)
     conn.Close()
+}
+
+func get_status(conn net.Conn) {
+	var remote_infos = strings.Split(conn.RemoteAddr().String(), ":")
+	var remote_addr = remote_infos[0]
+	var remote_port = remote_infos[1]
+	fmt.Println()
+	// fmt.Println("You are connected to:")
+	fmt.Println("\tAddr: " + remote_addr)
+	fmt.Println("\tPort: " + remote_port)
+	fmt.Println()
 }
 
 func writeToConn(conn net.Conn, line string) {
@@ -99,6 +110,7 @@ func usage(w io.Writer) {
 var completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
 	readline.PcItem("help"),
+	readline.PcItem("status"),
 )
 
 func filterInput(r rune) (rune, bool) {
