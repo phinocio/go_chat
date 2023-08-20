@@ -1,10 +1,11 @@
 package server
 
 import (
-	"fmt"
-	"net"
 	"io"
-	"os"
+	"fmt"
+	"log"
+	"net"
+	// "os"
 )
 
 func Run(host string, port string) {
@@ -15,7 +16,7 @@ func Run(host string, port string) {
 		fmt.Println("An error happened, ", err)
 	}
 
-	fmt.Println("Listening on " + host + ":" + port)
+	fmt.Println("[INFO] Listening on " + host + ":" + port)
 
 	defer ln.Close()
 
@@ -26,29 +27,33 @@ func Run(host string, port string) {
 			fmt.Println("An error happened in the for loop, ", err)
 		}
 
-		// go func(c net.Conn) {
-  //           defer c.Close()
-  //           io.Copy(os.Stdout, c)
-  //       }(conn)
+		log.Println("[INFO] Connection received from: ", conn.RemoteAddr())
+
 		go handleConnection(conn)
 	}
 }
 
 func handleConnection(conn net.Conn) {
-	// defer conn.Close()
-	// buf, read_err := io.ReadAll(conn)
-	// fmt.Println("Connection received from", conn.RemoteAddr())
-	// if read_err != nil {
-	// 	fmt.Println("failed:", read_err)
-	// 	return
-	// }
-	// fmt.Println("Got: ", string(buf))
-	//
-	// _, write_err := conn.Write([]byte("Message received.\n"))
-	// if write_err != nil {
-	// 	fmt.Println("failed:", write_err)
-	// 	return
-	// }
-	defer conn.Close()
-    io.Copy(os.Stdout, conn) }
+	streamMessages(conn)
+	defer closeConnection(conn)
+}
 
+func streamMessages(conn net.Conn) {
+    tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
+    for {
+        n, err := conn.Read(tmp)
+        if err != nil {
+            if err != io.EOF {
+                fmt.Println("read error:", err)
+            }
+            break
+        }
+        // fmt.Println("got", n, "bytes.")
+		fmt.Print("[INFO] Msg from ", conn.RemoteAddr(),  ": ", string(tmp[:n]))
+    }
+}
+
+func closeConnection(conn net.Conn) {
+	log.Println("[INFO] Connection closed from:", conn.RemoteAddr())
+	conn.Close()
+}
