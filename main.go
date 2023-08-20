@@ -9,13 +9,38 @@ import (
 )
 
 func main() {
-	var arg = strings.ToLower(os.Args[1])
+	var instance string
+	var host string
+	var port string
 
-	if arg == "client" {
-		client.Run()
-	} else if arg == "server" {
-		server.Run()
+	// Get client or server
+	if len(os.Args) >= 2 {
+		instance = strings.ToLower(os.Args[1])
 	} else {
-		fmt.Println("Please pass one of 'client' or 'server' as an arg")
+		instance = "client" // Default to client
+	}
+
+
+	// Get the host
+	if len(os.Args) >= 3 {
+		host = strings.ToLower(os.Args[2])
+	} else {
+		host = "127.0.0.1"
+	}
+
+	// Get the port
+	if len(os.Args) >= 4 {
+		port = strings.ToLower(os.Args[3])
+	} else {
+		port = "4444"
+	}
+
+	// Run client or server
+	if instance == "client" {
+		client.Run(host, port)
+	} else if instance == "server" {
+		server.Run(host, port)
+	} else {
+		fmt.Println("Something went wrong with args passed. Found ", len(os.Args))
 	}
 }

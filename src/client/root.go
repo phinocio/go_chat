@@ -4,7 +4,8 @@ import (
 	"fmt"
 )
 
-func Run() {
+func Run(host string, port string) {
+	fmt.Println(host, port)
 	fmt.Println("Hello from Client!")
 }
 
