@@ -3,12 +3,10 @@ package client
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/chzyer/readline"
 )
@@ -64,26 +62,15 @@ func Run(host string, port string) {
 
 		line = strings.TrimSpace(line)
 		switch {
-		case line == "help":
-			usage(l.Stderr())
-		case strings.HasPrefix(line, "say"):
-			line := strings.TrimSpace(line[3:])
-			if len(line) == 0 {
-				log.Println("say what?")
-				break
-			}
-			go func() {
-				for range time.Tick(time.Second) {
-					log.Println(line)
-				}
-			}()
-		case line == "exit":
-			goto exit
-		case line == "":
-		default:
-			// log.Println("you said:", strconv.Quote(line))
-            writeToConn(conn, line)
-            // fmt.Println(line.)
+            case line == "help":
+                usage(l.Stderr())
+            case line == "exit":
+                goto exit
+            case line == "":
+            default:
+                // log.Println("you said:", strconv.Quote(line))
+                writeToConn(conn, line)
+                // fmt.Println(line.)
 		}
 	}
 exit:
@@ -103,44 +90,15 @@ func writeToConn(conn net.Conn, line string) {
 }
 
 func usage(w io.Writer) {
+	io.WriteString(w, "\ndefault behavior is to take input and write it to the server\n\n")
 	io.WriteString(w, "commands:\n")
 	io.WriteString(w, completer.Tree("    "))
-}
-
-// Function constructor - constructs new function for listing given directory
-func listFiles(path string) func(string) []string {
-	return func(line string) []string {
-		names := make([]string, 0)
-		files, _ := ioutil.ReadDir(path)
-		for _, f := range files {
-			names = append(names, f.Name())
-		}
-		return names
-	}
+	io.WriteString(w, "\n")
 }
 
 var completer = readline.NewPrefixCompleter(
-	readline.PcItem("say",
-		readline.PcItemDynamic(listFiles("./"),
-			readline.PcItem("with",
-				readline.PcItem("following"),
-				readline.PcItem("items"),
-			),
-		),
-		readline.PcItem("hello"),
-		readline.PcItem("exit"),
-	),
 	readline.PcItem("exit"),
 	readline.PcItem("help"),
-	// readline.PcItem("go",
-	// 	readline.PcItem("build", readline.PcItem("-o"), readline.PcItem("-v")),
-	// 	readline.PcItem("install",
-	// 		readline.PcItem("-v"),
-	// 		readline.PcItem("-vv"),
-	// 		readline.PcItem("-vvv"),
-	// 	),
-	// 	readline.PcItem("test"),
-	// ),
 )
 
 func filterInput(r rune) (rune, bool) {
