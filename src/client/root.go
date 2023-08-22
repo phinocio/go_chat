@@ -11,16 +11,10 @@ import (
 	"github.com/chzyer/readline"
 )
 
-const (
-    HOST = "localhost"
-    PORT = "4444"
-    TYPE = "tcp"
-)
-
 func Run(host string, port string) {
     fmt.Println("[INFO]  client entry called")
 
-    conn, err := net.Dial("tcp", HOST+":"+PORT)
+    conn, err := net.Dial("tcp", host+":"+port)
     if err != nil {
             fmt.Println("[ERROR] failed to connect")
             os.Exit(1)
