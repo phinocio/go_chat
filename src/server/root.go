@@ -2,21 +2,22 @@ package server
 
 import (
 	"io"
-	"fmt"
-	"log"
 	"net"
+
 	// "os"
+
+	"go_chat/src/utils/log_msgs"
 )
 
 func Run(host string, port string) {
-	fmt.Println(host, port)
+	log_msgs.InfoLog( host + " " + port)
 	ln, err := net.Listen("tcp4", host+":"+port)
 
 	if err != nil {
-		fmt.Println("An error happened, ", err)
+		log_msgs.ErrorTimeLog( err.Error() )
 	}
 
-	fmt.Println("[INFO] Listening on " + host + ":" + port)
+	log_msgs.InfoLog("Listening on " + host + ":" + port)
 
 	defer ln.Close()
 
@@ -24,10 +25,10 @@ func Run(host string, port string) {
 		conn, err := ln.Accept()
 
 		if err != nil {
-			fmt.Println("An error happened in the for loop, ", err)
+			log_msgs.ErrorLog( "An error happened in the for loop" + err.Error())
 		}
 
-		log.Println("[INFO] Connection received from: ", conn.RemoteAddr())
+		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String()  )
 
 		go handleConnection(conn)
 	}
@@ -44,16 +45,16 @@ func streamMessages(conn net.Conn) {
         n, err := conn.Read(tmp)
         if err != nil {
             if err != io.EOF {
-                fmt.Println("read error:", err)
+				log_msgs.ErrorLog("read error:" + err.Error())
             }
             break
         }
         // fmt.Println("got", n, "bytes.")
-		fmt.Print("[INFO] Msg from ", conn.RemoteAddr(),  ": ", string(tmp[:n]))
+		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ":" + string(tmp[:n]))
     }
 }
 
 func closeConnection(conn net.Conn) {
-	log.Println("[INFO] Connection closed from:", conn.RemoteAddr())
+	log_msgs.InfoTimeLog("Connection close from: " + conn.RemoteAddr().String())
 	conn.Close()
 }

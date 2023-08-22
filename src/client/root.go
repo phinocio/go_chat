@@ -9,14 +9,16 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+
+	"go_chat/src/utils/log_msgs"
 )
 
 func Run(host string, port string) {
-    fmt.Println("[INFO]  client entry called")
-
+	log_msgs.InfoLog("client entry called")
+	log_msgs.InfoTimeLog("client entry called")
     conn, err := net.Dial("tcp", host+":"+port)
     if err != nil {
-            fmt.Println("[ERROR] failed to connect")
+			log_msgs.ErrorLog("failed to connect")
             os.Exit(1)
     }
     
