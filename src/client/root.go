@@ -10,6 +10,7 @@ import (
 
 	"github.com/chzyer/readline"
 
+	"go_chat/src/utils/colors"
 	"go_chat/src/utils/log_msgs"
 )
 
@@ -28,7 +29,7 @@ func Run(host string, port string) {
 	}
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
-		Prompt:          "[go_chat]> ",
+		Prompt:          colors.ColorWrap(colors.Purple, "[go_chat]> "),
 		HistoryFile:     dir  + "/example.history",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
@@ -80,8 +81,8 @@ func get_status(conn net.Conn) {
 	var remote_port = remote_infos[1]
 	fmt.Println()
 	// fmt.Println("You are connected to:")
-	fmt.Println("\tAddr: " + remote_addr)
-	fmt.Println("\tPort: " + remote_port)
+	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tAddr: ") + remote_addr)
+	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tPort: ") + remote_port)
 	fmt.Println()
 }
 

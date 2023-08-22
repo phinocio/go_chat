@@ -3,12 +3,14 @@ package log_msgs
 import (
 	"fmt"
 	"log"
+
+	"go_chat/src/utils/colors"
 )
 
 const (
-	info_prefix  = "[INFO]  "
-	warn_prefix  = "[WARN]  "
-	error_prefix = "[ERROR] "
+	info_prefix  = colors.LightBlue + "[INFO]  " + colors.ResetColor
+	warn_prefix  = colors.Yellow + "[WARN]  " + colors.ResetColor
+	error_prefix = colors.Red + "[ERROR] " + colors.ResetColor
 )
 
 func InfoLog(info_details string) {

@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"go_chat/src/client"
-	"go_chat/src/server"
 	"os"
 	"strings"
+
+	"go_chat/src/client"
+	"go_chat/src/server"
 )
 
 func main() {
