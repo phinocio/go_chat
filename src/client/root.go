@@ -25,6 +25,10 @@ func Run(host string, port string, nameTarget string) {
             os.Exit(1)
     }
 	// define name:target
+	log_msgs.InfoLog(nameTarget)
+	log_msgs.InfoLog("myname: " + strings.Split(nameTarget, ":")[0])
+	log_msgs.InfoLog("targetname: " + strings.Split(nameTarget, ":")[1])
+	// writeToConn(conn, nameTarget)
 
 	go readFromServer(conn)
     dir, err := os.Getwd()
