@@ -38,6 +38,14 @@ func Run(host string, port string) {
 		}
 
 		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String())
+		tmp := make([]byte, 256)
+		n, err := conn.Read(tmp)
+		var metaData = strings.Trim(string(tmp[:n]), "\n")
+		nameTarget := strings.Split(metaData, ":")
+		log_msgs.InfoLog("Metadata received: " + string(tmp[:n]))
+		log_msgs.InfoLog("Name: " + nameTarget[0] + ". Tareget: " + nameTarget[1])
+
+
 		clients = append(clients, conn)
 		log_msgs.InfoLog("Last connection: " + clients[len(clients)-1].RemoteAddr().String())
 		go handleConnection(conn)
