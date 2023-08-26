@@ -3,11 +3,20 @@ package server
 import (
 	"io"
 	"net"
+	"strings"
 
 	// "os"
 
 	"go_chat/src/utils/log_msgs"
 )
+
+
+type Connection struct {
+	name string // The name of this client instance
+	peer string	// The person we are trying to talk with
+}
+
+var clients []net.Conn
 
 func Run(host string, port string) {
 	log_msgs.InfoLog( host + " " + port)
@@ -28,8 +37,9 @@ func Run(host string, port string) {
 			log_msgs.ErrorLog( "An error happened in the for loop" + err.Error())
 		}
 
-		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String()  )
-
+		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String())
+		clients = append(clients, conn)
+		log_msgs.InfoLog("Last connection: " + clients[len(clients)-1].RemoteAddr().String())
 		go handleConnection(conn)
 	}
 }
@@ -50,7 +60,17 @@ func streamMessages(conn net.Conn) {
             break
         }
         // fmt.Println("got", n, "bytes.")
-		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ":" + string(tmp[:n]))
+		var msg = strings.Trim(string(tmp[:n]), "\n")
+		// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
+
+		if conn == clients[0] {
+			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + " sent to " + clients[1].RemoteAddr().String() + ". Msg: " + msg)
+			clients[1].Write([]byte(msg))
+		}
+		if conn == clients[1] {
+			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + " sent to " + clients[1].RemoteAddr().String() + ". Msg: " + msg)
+			clients[0].Write([]byte(msg))
+		}
     }
 }
 

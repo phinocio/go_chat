@@ -13,6 +13,7 @@ func main() {
 	var instance string
 	var host string
 	var port string
+	var nameTarget string
 
 	// Get client or server
 	if len(os.Args) >= 2 {
@@ -20,7 +21,6 @@ func main() {
 	} else {
 		instance = "client" // Default to client
 	}
-
 
 	// Get the host
 	if len(os.Args) >= 3 {
@@ -36,9 +36,14 @@ func main() {
 		port = "4444"
 	}
 
+	// Get nameTarget
+	if len(os.Args) >= 5 {
+		nameTarget = strings.ToLower(os.Args[4])
+	}
+
 	// Run client or server
 	if instance == "client" {
-		client.Run(host, port)
+		client.Run(host, port, nameTarget)
 	} else if instance == "server" {
 		server.Run(host, port)
 	} else {

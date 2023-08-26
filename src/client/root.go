@@ -14,7 +14,9 @@ import (
 	"go_chat/src/utils/log_msgs"
 )
 
-func Run(host string, port string) {
+
+
+func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
     conn, err := net.Dial("tcp", host+":"+port)
@@ -22,7 +24,9 @@ func Run(host string, port string) {
 			log_msgs.ErrorLog("failed to connect")
             os.Exit(1)
     }
-    
+	// define name:target
+
+	go readFromServer(conn)
     dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -95,6 +99,25 @@ func writeToConn(conn net.Conn, line string) {
     //         fmt.Println("failed to read the client connection")
     // }
     // fmt.Print(string(buffer))
+}
+
+func readFromServer(conn net.Conn) {
+	println("Reading from server!")
+	for {
+		tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
+		for {
+			n, err := conn.Read(tmp)
+			if err != nil {
+				if err != io.EOF {
+					log_msgs.ErrorLog("read error:" + err.Error())
+				}
+				break
+			}
+			// fmt.Println("got", n, "bytes.")
+			var msg = strings.Trim(string(tmp[:n]), "\n")
+			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
+		}
+	}
 }
 
 func usage(w io.Writer) {
