@@ -14,7 +14,8 @@ import (
 	"go_chat/src/utils/log_msgs"
 )
 
-
+// Global Constants Avaiable to All go-routines
+var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
 func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("client entry called")
@@ -38,7 +39,7 @@ func Run(host string, port string, nameTarget string) {
 	}
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
-		Prompt:          colors.ColorWrap(colors.Purple, "[go_chat]> "),
+		Prompt:          global_prompt,
 		HistoryFile:     dir  + "/example.history",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
@@ -121,7 +122,10 @@ func readFromServer(conn net.Conn) {
 			}
 			// fmt.Println("got", n, "bytes.")
 			var msg = strings.Trim(string(tmp[:n]), "\n")
-			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
+			fmt.Println("")
+			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
+			os.Stderr.WriteString("\n" + msg + "\n\n")
+			os.Stderr.WriteString(global_prompt)
 		}
 	}
 }
