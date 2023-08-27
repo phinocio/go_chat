@@ -31,6 +31,7 @@ func Run(host string, port string, nameTarget string) {
 	writeToConn(conn, nameTarget)
 
 	go readFromServer(conn)
+	
     dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
@@ -57,7 +58,8 @@ func Run(host string, port string, nameTarget string) {
 		line, err := l.Readline()
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
-				break
+				continue 					// disable ctrl+c
+				// break
 			} else {
 				continue
 			}
