@@ -1,7 +1,7 @@
 package server
 
 import (
-	"io"
+	// "io"
 	"net"
 	"strings"
 
@@ -30,24 +30,14 @@ func Run(host string, port string) {
 	log_msgs.InfoLog("Listening on " + host + ":" + port)
 
 	defer ln.Close()
-	
+
 	for {
 		conn, err := ln.Accept()
-		
+
 		if err != nil {
 			log_msgs.ErrorLog("An error happened in the for loop" + err.Error())
 		}
-<<<<<<< HEAD
-		
-		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String())
-||||||| parent of 9ae7276 ([networking] work on sendMsg chunking)
-
-		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String())
-=======
-
 		log_msgs.InfoTimeLog("Connection received from: " + conn.RemoteAddr().String())
->>>>>>> 9ae7276 ([networking] work on sendMsg chunking)
-
 		tmp := make([]byte, 256)
 		n, err := conn.Read(tmp)
 		var metaData = strings.Trim(string(tmp[:n]), "\n")
@@ -66,23 +56,24 @@ func handleConnection(client network.Connection) {
 }
 
 func streamMessages(client network.Connection) {
-	tmp := make([]byte, network.ChunkSize * network.MaxChunks + 1) // using small tmo buffer for demonstrating
+	// tmp := make([]byte, network.ChunkSize * network.MaxChunks + 1) // using small tmo buffer for demonstrating
 	for {
-		n, err := client.Conn.Read(tmp)
-		if err != nil {
-			if err != io.EOF {
-				log_msgs.ErrorLog("read error:" + err.Error())
-			}
-			break
-		}
-		// fmt.Println("got", n, "bytes.")
-		var msg = strings.Trim(string(tmp[:n]), "\n")
+		// n, err := client.Conn.Read(tmp)
+		// if err != nil {
+		// 	if err != io.EOF {
+		// 		log_msgs.ErrorLog("read error:" + err.Error())
+		// 	}
+		// 	break
+		// }
+		// // fmt.Println("got", n, "bytes.")
+		// var msg = strings.Trim(string(tmp[:n]), "\n")
 		// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
-
+		var msg = network.RecvMsg(client.Conn)
 		for _, c := range clients {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
-				network.SendMsg(c, msg)
+				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
+				network.SendMsg(c.Conn, msg)
 			}
 		}
 	}

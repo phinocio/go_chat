@@ -12,6 +12,7 @@ import (
 
 	"go_chat/src/utils/colors"
 	"go_chat/src/utils/log_msgs"
+	"go_chat/src/utils/network"
 )
 
 // Global Constants Avaiable to All go-routines
@@ -78,7 +79,8 @@ func Run(host string, port string, nameTarget string) {
 				get_status(conn)
             case line == "":
             default:
-                writeToConn(conn, line)
+				network.SendMsg(conn, line)
+                // writeToConn(conn, line)
 		}
 	}
 exit:
@@ -110,24 +112,26 @@ func writeToConn(conn net.Conn, line string) {
 
 func readFromServer(conn net.Conn) {
 	println("Reading from server!")
-	for {
-		tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
+	// for {
+		// tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
 		for {
-			n, err := conn.Read(tmp)
-			if err != nil {
-				if err != io.EOF {
-					log_msgs.ErrorLog("read error:" + err.Error())
-				}
-				break
-			}
-			// fmt.Println("got", n, "bytes.")
-			var msg = strings.Trim(string(tmp[:n]), "\n")
-			fmt.Println("")
-			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
-			os.Stderr.WriteString("\n" + msg + "\n\n")
-			os.Stderr.WriteString(global_prompt)
+			// n, err := conn.Read(tmp)
+			// if err != nil {
+			// 	if err != io.EOF {
+			// 		log_msgs.ErrorLog("read error:" + err.Error())
+			// 	}
+			// 	break
+			// }
+			// // fmt.Println("got", n, "bytes.")
+			// var msg = strings.Trim(string(tmp[:n]), "\n")
+			// fmt.Println("")
+			// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
+			// os.Stderr.WriteString("\n" + msg + "\n\n")
+			// os.Stderr.WriteString(global_prompt)
+			var msg = network.RecvMsg(conn)
+			println(msg)
 		}
-	}
+	// }
 }
 
 func usage(w io.Writer) {

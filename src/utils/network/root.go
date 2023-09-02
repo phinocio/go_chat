@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ChunkSize = 64
+	ChunkSize = 8
 	MaxChunks = 5
 )
 
@@ -24,14 +24,14 @@ func getNumChunks(msg string) int {
 	return len(msg)/ChunkSize + 1
 }
 
-func RecvMsg(source net.Conn) {
+func RecvMsg(source net.Conn) string {
 	// pseude code
 	// 1. recieve num chunks
 	// 2. for loop of reading chunks until done
 	// return msg
-	
+
 	// 1. recieve num chunks
-	recv_buf := make([]byte, 256)
+	recv_buf := make([]byte, ChunkSize)
 	n, err := source.Read(recv_buf)
 	if err != nil {
 		if err != io.EOF {
@@ -42,9 +42,9 @@ func RecvMsg(source net.Conn) {
 	x = strings.Trim(x, "\x00\r\n")
 	num_chunks, err := strconv.Atoi(x)
 	if err != nil {
-		log_msgs.ErrorLog("failed to convert chunk string to int")
+		log_msgs.ErrorLog("failed to convert chunk \"" + x + "\" string to int")
 	}
-	
+
 	// 2. for loop of reading chunks until done
 	var msg []byte
 	recv_buf = make([]byte, ChunkSize)
@@ -56,12 +56,13 @@ func RecvMsg(source net.Conn) {
 			}
 		}
 		recv_buf := recv_buf[:n]
-		msg = append(msg, recv_buf...)	
+		msg = append(msg, recv_buf...)
 	}
 	println(strings.TrimSpace(string(msg)))
+	return strings.TrimSpace(string(msg))
 }
 
-func SendMsg(target Connection, msg string) {
+func SendMsg(target net.Conn, msg string) {
 	// send a msg
 	// log_msgs.InfoLog(msg)
 	var chunks = getNumChunks(msg)
@@ -72,7 +73,12 @@ func SendMsg(target Connection, msg string) {
 		log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
 	}
 
-	log_msgs.InfoLog("[" + target.Peer + "]: ")
+	// Send number of chunks
+	var tmp = make([]byte, ChunkSize)
+	tmp = []byte(fmt.Sprint(chunks))
+	target.Write(tmp)
+
+	// log_msgs.InfoLog("[" + target.Peer + "]: ")
 	for i := 0; i < chunks; i++ {
 		var start = i * ChunkSize
 		var end = (i + 1 ) * ChunkSize
@@ -84,7 +90,9 @@ func SendMsg(target Connection, msg string) {
 		}
 
 		print(msg[start:end])
-		target.Conn.Write([]byte(msg[start:end]))
+		var tmp = make([]byte, ChunkSize)
+		tmp = []byte(msg[start:end])
+		target.Write(tmp)
 	}
 	println()
 }
