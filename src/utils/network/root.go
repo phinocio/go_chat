@@ -10,8 +10,10 @@ import (
 )
 
 const (
-	ChunkSize = 80
-	MaxChunks = 5
+	NumChunksByteSize = 8
+	ChunkSize = 16
+	MaxChunks = 50
+
 )
 
 type Connection struct {
@@ -31,7 +33,7 @@ func RecvMsg(source net.Conn) string {
 	// return msg
 
 	// 1. recieve num chunks
-	recv_buf := make([]byte, ChunkSize)
+	recv_buf := make([]byte, NumChunksByteSize)
 	n, err := source.Read(recv_buf)
 	if err != nil {
 		if err != io.EOF {
@@ -74,9 +76,8 @@ func SendMsg(target net.Conn, msg string) {
 	}
 
 	// Send number of chunks
-	var num_chunks = make([]byte, ChunkSize)
-	num_chunks = []byte(strconv.Itoa(chunks))
-	target.Write(num_chunks[:ChunkSize])
+	var num_chunks = []byte(strconv.Itoa(chunks))
+	target.Write(num_chunks[:NumChunksByteSize])
 
 	// log_msgs.InfoLog("[" + target.Peer + "]: ")
 	for i := 0; i < chunks; i++ {

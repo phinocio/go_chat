@@ -73,6 +73,7 @@ func streamMessages(client network.Connection) {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
 				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
+				msg = "[" + client.Name + "]: " + msg
 				network.SendMsg(c.Conn, msg)
 			}
 		}
