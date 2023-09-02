@@ -32,7 +32,7 @@ func Run(host string, port string, nameTarget string) {
 	writeToConn(conn, nameTarget)
 
 	go readFromServer(conn)
-	
+
     dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
