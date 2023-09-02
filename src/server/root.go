@@ -30,14 +30,14 @@ func Run(host string, port string) {
 	log_msgs.InfoLog("Listening on " + host + ":" + port)
 
 	defer ln.Close()
-
+	
 	for {
 		conn, err := ln.Accept()
-
+		
 		if err != nil {
 			log_msgs.ErrorLog( "An error happened in the for loop" + err.Error())
 		}
-
+		
 		log_msgs.InfoTimeLog( "Connection received from: " + conn.RemoteAddr().String())
 
 		tmp := make([]byte, 256)
