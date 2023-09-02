@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ChunkSize = 8
+	ChunkSize = 80
 	MaxChunks = 5
 )
 
@@ -22,19 +22,6 @@ type Connection struct {
 
 func getNumChunks(msg string) int {
 	return len(msg)/ChunkSize + 1
-}
-
-func ServerRouteMsg(source net.Conn, target net.Conn) {
-	tmp := make([]byte, ChunkSize * MaxChunks)
-	n, err := source.Read(tmp)
-	if err != nil {
-		if err != io.EOF {
-			log_msgs.ErrorLog("read error:" + err.Error())
-		}
-	}
-	// fmt.Println("got", n, "bytes.")
-	var msg = strings.Trim(string(tmp[:n]), "\n")
-	SendMsg(target, msg)
 }
 
 func RecvMsg(source net.Conn) string {
@@ -52,7 +39,7 @@ func RecvMsg(source net.Conn) string {
 		}
 	}
 
-	var x = strings.Trim(string(recv_buf[:n]), "\n")
+	var x = strings.Trim(string(recv_buf[:n]), "\x00\n")
 	num_chunks, err := strconv.Atoi(x)
 	if err != nil {
 		log_msgs.ErrorLog("failed to convert chunk \"" + x + "\" string to int for " + source.RemoteAddr().String())
@@ -87,12 +74,9 @@ func SendMsg(target net.Conn, msg string) {
 	}
 
 	// Send number of chunks
-	var bChunk []byte
-	var tmp = make([]byte, ChunkSize)
-	tmp = []byte(strconv.Itoa(chunks))
-	tmp = tmp[:ChunkSize]
-	bChunk = append(bChunk, tmp...)
-	target.Write(bChunk)
+	var num_chunks = make([]byte, ChunkSize)
+	num_chunks = []byte(strconv.Itoa(chunks))
+	target.Write(num_chunks[:ChunkSize])
 
 	// log_msgs.InfoLog("[" + target.Peer + "]: ")
 	for i := 0; i < chunks; i++ {

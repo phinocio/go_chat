@@ -68,13 +68,12 @@ func streamMessages(client network.Connection) {
 		// // fmt.Println("got", n, "bytes.")
 		// var msg = strings.Trim(string(tmp[:n]), "\n")
 		// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
-		// var msg = network.RecvMsg(client.Conn)
+		var msg = network.RecvMsg(client.Conn)
 		for _, c := range clients {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
 				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
-				// network.SendMsg(c.Conn, msg)
-				network.ServerRouteMsg(client.Conn, c.Conn)
+				network.SendMsg(c.Conn, msg)
 			}
 		}
 	}
