@@ -24,6 +24,19 @@ func getNumChunks(msg string) int {
 	return len(msg)/ChunkSize + 1
 }
 
+func ServerRouteMsg(source net.Conn, target net.Conn) {
+	tmp := make([]byte, ChunkSize * MaxChunks)
+	n, err := source.Read(tmp)
+	if err != nil {
+		if err != io.EOF {
+			log_msgs.ErrorLog("read error:" + err.Error())
+		}
+	}
+	// fmt.Println("got", n, "bytes.")
+	var msg = strings.Trim(string(tmp[:n]), "\n")
+	SendMsg(target, msg)
+}
+
 func RecvMsg(source net.Conn) string {
 	// pseude code
 	// 1. recieve num chunks
@@ -38,11 +51,11 @@ func RecvMsg(source net.Conn) string {
 			log_msgs.ErrorLog("read error:" + err.Error())
 		}
 	}
-	var x = string(recv_buf[:n])
-	x = strings.Trim(x, "\x00\r\n")
+
+	var x = strings.Trim(string(recv_buf[:n]), "\n")
 	num_chunks, err := strconv.Atoi(x)
 	if err != nil {
-		log_msgs.ErrorLog("failed to convert chunk \"" + x + "\" string to int")
+		log_msgs.ErrorLog("failed to convert chunk \"" + x + "\" string to int for " + source.RemoteAddr().String())
 	}
 
 	// 2. for loop of reading chunks until done
@@ -58,7 +71,7 @@ func RecvMsg(source net.Conn) string {
 		recv_buf := recv_buf[:n]
 		msg = append(msg, recv_buf...)
 	}
-	println(strings.TrimSpace(string(msg)))
+	// println(strings.TrimSpace(string(msg)))
 	return strings.TrimSpace(string(msg))
 }
 
@@ -70,13 +83,16 @@ func SendMsg(target net.Conn, msg string) {
 		log_msgs.ErrorLog("Msg too long bro. Got " + fmt.Sprint(chunks) + " chunks, expected max of " + fmt.Sprint(MaxChunks))
 		return
 	} else {
-		log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
+		// log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
 	}
 
 	// Send number of chunks
+	var bChunk []byte
 	var tmp = make([]byte, ChunkSize)
-	tmp = []byte(fmt.Sprint(chunks))
-	target.Write(tmp)
+	tmp = []byte(strconv.Itoa(chunks))
+	tmp = tmp[:ChunkSize]
+	bChunk = append(bChunk, tmp...)
+	target.Write(bChunk)
 
 	// log_msgs.InfoLog("[" + target.Peer + "]: ")
 	for i := 0; i < chunks; i++ {
@@ -89,7 +105,7 @@ func SendMsg(target net.Conn, msg string) {
 			end = start + remainingLen
 		}
 
-		print(msg[start:end])
+		// print(msg[start:end])
 		var tmp = make([]byte, ChunkSize)
 		tmp = []byte(msg[start:end])
 		target.Write(tmp)

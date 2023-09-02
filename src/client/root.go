@@ -124,12 +124,12 @@ func readFromServer(conn net.Conn) {
 			// }
 			// // fmt.Println("got", n, "bytes.")
 			// var msg = strings.Trim(string(tmp[:n]), "\n")
-			// fmt.Println("")
-			// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
-			// os.Stderr.WriteString("\n" + msg + "\n\n")
-			// os.Stderr.WriteString(global_prompt)
 			var msg = network.RecvMsg(conn)
-			println(msg)
+			fmt.Println("")
+			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
+			os.Stderr.WriteString("\n" + msg + "\n\n")
+			os.Stderr.WriteString(global_prompt)
+			// println(msg)
 		}
 	// }
 }
