@@ -2,8 +2,8 @@ package network
 
 import (
 	"fmt"
-	"io"
 	"go_chat/src/utils/log_msgs"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -71,15 +71,15 @@ func SendMsg(target net.Conn, msg []byte) {
 	if chunks > MaxChunks {
 		log_msgs.ErrorLog("Msg too long bro. Got " + fmt.Sprint(chunks) + " chunks, expected max of " + fmt.Sprint(MaxChunks))
 		return
-	} else {
+	} 
+	//else {
 		// log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
-	}
+	//}
 
 	// Send number of chunks
 	var num_chunks = []byte(strconv.Itoa(chunks))
 	target.Write(num_chunks[:NumChunksByteSize])
 
-	// log_msgs.InfoLog("[" + target.Peer + "]: ")
 	for i := 0; i < chunks; i++ {
 		var start = i * ChunkSize
 		var end = (i + 1 ) * ChunkSize
@@ -90,7 +90,6 @@ func SendMsg(target net.Conn, msg []byte) {
 			end = start + remainingLen
 		}
 
-		// print(msg[start:end])
 		var tmp = make([]byte, ChunkSize)
 		tmp = []byte(msg[start:end])
 		target.Write(tmp)

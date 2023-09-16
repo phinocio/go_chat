@@ -2,15 +2,16 @@ package client
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
-	"encoding/base64"
 
 	"github.com/chzyer/readline"
+	"github.com/cossacklabs/themis/gothemis/keys"
 
 	"go_chat/src/utils/colors"
 	"go_chat/src/utils/encryption"
@@ -21,11 +22,28 @@ import (
 // Global Constants Avaiable to All go-routines
 var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
-var	aliceKeys = encryption.Gen_Keys()
-var	bobKeys = encryption.Gen_Keys()
+var gosux, _ = base64.StdEncoding.DecodeString("VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm")
+var alicePublicKey = &keys.PublicKey{
+	Value: gosux,
+}
+var gosux2, _ = base64.StdEncoding.DecodeString("UkVDMgAAAC2WXSbNAMNzZBCJCD7EjJhEnKeAPASMDKTBOySyXqOrAL4VbXVc")
+var alicePrivateKey = &keys.PrivateKey{
+	Value: gosux2,
+}
+
+var gosux3, _ = base64.StdEncoding.DecodeString("VUVDMgAAAC3+kngIAkAdHfaub4y5+VVHZglc/8+oJ7nBpwUpxvH4EOzuQCbS")
+var bobPublicKey = &keys.PublicKey{
+	Value: gosux3,
+}
+var gosux4, _ = base64.StdEncoding.DecodeString("UkVDMgAAAC2JIg6cANXF+T4cntocTUjWvO9Z8VPUgE1N3eouBrb9gGOupKyF")
+var bobPrivateKey = &keys.PrivateKey{
+	Value: gosux4,
+}
+
+
+
 
 func Run(host string, port string, nameTarget string) {
-
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
     conn, err := net.Dial("tcp", host+":"+port)
@@ -88,21 +106,25 @@ func Run(host string, port string, nameTarget string) {
             default:
 				var msg []byte
 				if (strings.Split(nameTarget, ":")[1] == "bob") {
-					msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public)
+					// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
+					msg = encryption.Encryptor([]byte(line), alicePrivateKey, bobPublicKey) 
 				}
 				if (strings.Split(nameTarget, ":")[1] == "alice") {
-					msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)
+					// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+					msg = encryption.Encryptor([]byte(line), bobPrivateKey, alicePublicKey) // ORIGINAL
 				}
-				println(base64.StdEncoding.EncodeToString(msg))
+				log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
 				var decrypted []byte
 				if (strings.Split(nameTarget, ":")[1] == "bob") {
-					decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)
+					// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+					decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)	
 				}
 				if (strings.Split(nameTarget, ":")[1] == "alice") {
-					decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)
+					// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
+					decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)	
 				}
 				// encryption.Encryptor(line)
-				println(base64.StdEncoding.EncodeToString(decrypted))
+				log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
 				network.SendMsg(conn, msg)
                 // writeToConn(conn, line)
 		}
@@ -127,47 +149,31 @@ func writeToConn(conn net.Conn, line string) {
     var buffer = []byte(line + "\n")
 
     conn.Write(buffer)
-    // buffer := make([]byte, 1024)
-    // _, err := conn.Read(buffer)
-    // if err != nil {
-    //         fmt.Println("failed to read the client connection")
-    // }
-    // fmt.Print(string(buffer))
 }
 
 
 func readFromServer(conn net.Conn) {
-	println("Reading from server!")
-	// for {
-		// tmp := make([]byte, 256)     // using small tmo buffer for demonstrating
-		for {
-			// n, err := conn.Read(tmp)
-			// if err != nil {
-			// 	if err != io.EOF {
-			// 		log_msgs.ErrorLog("read error:" + err.Error())
-			// 	}
-			// 	break
-			// }
-			// // fmt.Println("got", n, "bytes.")
-			// var msg = strings.Trim(string(tmp[:n]), "\n")
-			var msg = network.RecvMsg(conn)
-			var decrypted []byte
-			var whoIsThePrependedTag = bytes.Split(msg, []byte(": "))
-			println(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
-			if (string(whoIsThePrependedTag[0]) == "[bob]") {
-				decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)
-			}
-			if (string(whoIsThePrependedTag[0]) == "[alice]") {
-				decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)
-			}
-
-			fmt.Println("")
-			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
-			os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
-			os.Stderr.WriteString(global_prompt)
-			// println(msg)
+	log_msgs.InfoLog("Reading from server!")
+	for {
+		var msg = network.RecvMsg(conn)
+		var decrypted []byte
+		var whoIsThePrependedTag = bytes.Split(msg, []byte(": "))
+		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
+		if (string(whoIsThePrependedTag[0]) == "[bob]") {
+			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)	
 		}
-	// }
+		if (string(whoIsThePrependedTag[0]) == "[alice]") {
+			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)	// ORIGINAL
+			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)	
+		}
+
+		fmt.Println("")
+		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
+		os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
+		os.Stderr.WriteString(global_prompt)
+	}
+
 }
 
 func usage(w io.Writer) {

@@ -12,12 +12,6 @@ import (
 	"go_chat/src/utils/network"
 )
 
-// type Connection struct {
-// 	name string // The name of this client instance
-// 	peer string	// The person we are trying to talk with
-// 	conn net.Conn // The client's connection
-// }
-
 var clients []network.Connection
 
 func Run(host string, port string) {
@@ -57,18 +51,7 @@ func handleConnection(client network.Connection) {
 }
 
 func streamMessages(client network.Connection) {
-	// tmp := make([]byte, network.ChunkSize * network.MaxChunks + 1) // using small tmo buffer for demonstrating
 	for {
-		// n, err := client.Conn.Read(tmp)
-		// if err != nil {
-		// 	if err != io.EOF {
-		// 		log_msgs.ErrorLog("read error:" + err.Error())
-		// 	}
-		// 	break
-		// }
-		// // fmt.Println("got", n, "bytes.")
-		// var msg = strings.Trim(string(tmp[:n]), "\n")
-		// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
 		var msg = network.RecvMsg(client.Conn)
 		log_msgs.InfoLog("Base64 is: " + base64.StdEncoding.EncodeToString(msg))
 		for _, c := range clients {
