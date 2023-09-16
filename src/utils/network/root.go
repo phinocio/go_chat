@@ -11,7 +11,7 @@ import (
 
 const (
 	NumChunksByteSize = 8
-	ChunkSize = 16
+	ChunkSize = 1500
 	MaxChunks = 50
 
 )
@@ -22,11 +22,11 @@ type Connection struct {
 	Conn net.Conn // The client's connection
 }
 
-func getNumChunks(msg string) int {
+func getNumChunks(msg []byte) int {
 	return len(msg)/ChunkSize + 1
 }
 
-func RecvMsg(source net.Conn) string {
+func RecvMsg(source net.Conn) []byte {
 	// pseude code
 	// 1. recieve num chunks
 	// 2. for loop of reading chunks until done
@@ -61,10 +61,10 @@ func RecvMsg(source net.Conn) string {
 		msg = append(msg, recv_buf...)
 	}
 	// println(strings.TrimSpace(string(msg)))
-	return strings.TrimSpace(string(msg))
+	return []byte(strings.TrimSpace(string(msg)))
 }
 
-func SendMsg(target net.Conn, msg string) {
+func SendMsg(target net.Conn, msg []byte) {
 	// send a msg
 	// log_msgs.InfoLog(msg)
 	var chunks = getNumChunks(msg)

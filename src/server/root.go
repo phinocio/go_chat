@@ -2,6 +2,7 @@ package server
 
 import (
 	// "io"
+	"encoding/base64"
 	"net"
 	"strings"
 
@@ -73,7 +74,8 @@ func streamMessages(client network.Connection) {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
 				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
-				msg = "[" + client.Name + "]: " + msg
+				print(base64.StdEncoding.EncodeToString(msg))
+				msg = append([]byte("[" + client.Name + "]: "), msg[0:]...)
 				network.SendMsg(c.Conn, msg)
 			}
 		}
