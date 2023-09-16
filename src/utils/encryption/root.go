@@ -39,7 +39,8 @@ func Decryptor(cipher_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *
 	bobToAlice := message.New(my_priv_key, peer_publ_key)
 	decrypted, err := bobToAlice.Unwrap(cipher_text)
 	if err != nil {
-		fmt.Println("decryption failure", err)
+		fmt.Println("decryption failure")
+		fmt.Println(err)
 	}
 	return decrypted
 }

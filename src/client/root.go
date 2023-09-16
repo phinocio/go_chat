@@ -16,9 +16,6 @@ import (
 	"go_chat/src/utils/encryption"
 	"go_chat/src/utils/log_msgs"
 	"go_chat/src/utils/network"
-
-	"github.com/cossacklabs/themis/gothemis/keys"
-	"github.com/cossacklabs/themis/gothemis/message"
 )
 
 // Global Constants Avaiable to All go-routines
@@ -96,8 +93,16 @@ func Run(host string, port string, nameTarget string) {
 				if (strings.Split(nameTarget, ":")[1] == "alice") {
 					msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)
 				}
-				print(base64.StdEncoding.EncodeToString(msg))
+				println(base64.StdEncoding.EncodeToString(msg))
+				var decrypted []byte
+				if (strings.Split(nameTarget, ":")[1] == "bob") {
+					decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)
+				}
+				if (strings.Split(nameTarget, ":")[1] == "alice") {
+					decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)
+				}
 				// encryption.Encryptor(line)
+				println(base64.StdEncoding.EncodeToString(decrypted))
 				network.SendMsg(conn, msg)
                 // writeToConn(conn, line)
 		}
@@ -130,14 +135,6 @@ func writeToConn(conn net.Conn, line string) {
     // fmt.Print(string(buffer))
 }
 
-func gen_keys() ( *keys.Keypair) {
-	alice_keyPair, err := keys.New(keys.TypeEC)
-	if nil != err {
-		fmt.Println("Keypair generating error")
-		os.Exit(1)
-	}
-	return alice_keyPair
-}
 
 func readFromServer(conn net.Conn) {
 	println("Reading from server!")
@@ -154,31 +151,23 @@ func readFromServer(conn net.Conn) {
 			// // fmt.Println("got", n, "bytes.")
 			// var msg = strings.Trim(string(tmp[:n]), "\n")
 			var msg = network.RecvMsg(conn)
+			var decrypted []byte
 			var whoIsThePrependedTag = bytes.Split(msg, []byte(": "))
-			print(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
+			println(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
 			if (string(whoIsThePrependedTag[0]) == "[bob]") {
-				msg = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)
+				decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)
 			}
 			if (string(whoIsThePrependedTag[0]) == "[alice]") {
-				msg = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)
+				decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)
 			}
 
 			fmt.Println("")
 			log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
-			os.Stderr.WriteString("\n" + string(msg) + "\n\n")
+			os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
 			os.Stderr.WriteString(global_prompt)
 			// println(msg)
 		}
 	// }
-}
-
-func encryptor(clear_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *keys.PublicKey) ([]byte) {
-	aliceToBob := message.New(my_priv_key, peer_publ_key)
-	cipher_text, err := aliceToBob.Wrap(clear_text)
-	if err != nil {
-		fmt.Println("message cannot be empty")
-	}
-	return cipher_text
 }
 
 func usage(w io.Writer) {

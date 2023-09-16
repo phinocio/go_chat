@@ -70,11 +70,11 @@ func streamMessages(client network.Connection) {
 		// var msg = strings.Trim(string(tmp[:n]), "\n")
 		// log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": " + msg)
 		var msg = network.RecvMsg(client.Conn)
+		log_msgs.InfoLog("Base64 is: " + base64.StdEncoding.EncodeToString(msg))
 		for _, c := range clients {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
 				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
-				print(base64.StdEncoding.EncodeToString(msg))
 				msg = append([]byte("[" + client.Name + "]: "), msg[0:]...)
 				network.SendMsg(c.Conn, msg)
 			}

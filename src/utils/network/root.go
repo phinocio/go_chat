@@ -61,7 +61,7 @@ func RecvMsg(source net.Conn) []byte {
 		msg = append(msg, recv_buf...)
 	}
 	// println(strings.TrimSpace(string(msg)))
-	return []byte(strings.TrimSpace(string(msg)))
+	return msg
 }
 
 func SendMsg(target net.Conn, msg []byte) {
