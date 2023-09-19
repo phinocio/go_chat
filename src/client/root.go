@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -40,10 +41,66 @@ var bobPrivateKey = &keys.PrivateKey{
 	Value: gosux4,
 }
 
+type self_config struct {
+	Name string `json:"name"`
+	Priv_key string `json:"priv_key"`
+	Publ_key string `json:"publ_key"`
+}
+type peer_config struct {
+	Name string `json:"name"`
+	Publ_key string `json:"publ_key"`
+}
+type config_pack struct {
+	Self_config self_config `json:"self"`
+	Peer_config peer_config `json:"peer"`
+}
+type CONFIG_PACK interface {
+	debug_print()
+}
+func (v config_pack) debug_print() {
+	fmt.Println("SELF")
+	fmt.Println(v.Self_config.Name)
+	fmt.Println(v.Self_config.Priv_key)
+	fmt.Println(v.Self_config.Publ_key)
+	fmt.Println("")
+	fmt.Println("PEER")
+	fmt.Println(v.Peer_config.Name)
+	fmt.Println(v.Peer_config.Publ_key)
+}
+func load_config_file(filename string) (config_pack) {
+	var result config_pack
+
+	b, err := os.ReadFile(filename) // just pass the file name
+    if err != nil {
+        fmt.Print(err)
+    }
+
+	json.Unmarshal(b, &result)		// unmarshal means convert to struct
+
+	return result
+}
+func we_developing(){
+	var config_file_name_1 = "bob.json"
+	var config_file_name_2 = "alice.json"
+	
+	var conn_pack_1 = load_config_file(config_file_name_1)
+	conn_pack_1.debug_print()
+
+	fmt.Print("\n\n")
+
+	var conn_pack_2 =  load_config_file(config_file_name_2)
+	conn_pack_2.debug_print()
+	
+	os.Exit(1)
+}
+
 
 
 
 func Run(host string, port string, nameTarget string) {
+	//
+	we_developing()	// Gadget function for developing
+	//
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
     conn, err := net.Dial("tcp", host+":"+port)
