@@ -57,15 +57,15 @@ type config_pack struct {
 type CONFIG_PACK interface {
 	debug_print()
 }
-func (v config_pack) debug_print() {
+func (self config_pack) debug_print() {
 	fmt.Println("SELF")
-	fmt.Println(v.Self_config.Name)
-	fmt.Println(v.Self_config.Priv_key)
-	fmt.Println(v.Self_config.Publ_key)
+	fmt.Println(self.Self_config.Name)
+	fmt.Println(self.Self_config.Priv_key)
+	fmt.Println(self.Self_config.Publ_key)
 	fmt.Println("")
 	fmt.Println("PEER")
-	fmt.Println(v.Peer_config.Name)
-	fmt.Println(v.Peer_config.Publ_key)
+	fmt.Println(self.Peer_config.Name)
+	fmt.Println(self.Peer_config.Publ_key)
 }
 func load_config_file(filename string) (config_pack) {
 	var result config_pack
