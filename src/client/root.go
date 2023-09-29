@@ -23,31 +23,45 @@ import (
 // Global Constants Avaiable to All go-routines
 var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
-var gosux, _ = base64.StdEncoding.DecodeString("VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm")
+var gosux, _ = base64.StdEncoding.DecodeString(load_key("alice", "public"))
 var alicePublicKey = &keys.PublicKey{
 	Value: gosux,
 }
-var gosux2, _ = base64.StdEncoding.DecodeString("UkVDMgAAAC2WXSbNAMNzZBCJCD7EjJhEnKeAPASMDKTBOySyXqOrAL4VbXVc")
+var gosux2, _ = base64.StdEncoding.DecodeString(load_key("alice", "private"))
 var alicePrivateKey = &keys.PrivateKey{
 	Value: gosux2,
 }
 
-var gosux3, _ = base64.StdEncoding.DecodeString("VUVDMgAAAC3+kngIAkAdHfaub4y5+VVHZglc/8+oJ7nBpwUpxvH4EOzuQCbS")
+var gosux3, _ = base64.StdEncoding.DecodeString(load_key("bob", "public"))
 var bobPublicKey = &keys.PublicKey{
 	Value: gosux3,
 }
-var gosux4, _ = base64.StdEncoding.DecodeString("UkVDMgAAAC2JIg6cANXF+T4cntocTUjWvO9Z8VPUgE1N3eouBrb9gGOupKyF")
+var gosux4, _ = base64.StdEncoding.DecodeString(load_key("bob", "private"))
 var bobPrivateKey = &keys.PrivateKey{
 	Value: gosux4,
 }
 
+func load_key(src string, keyType string) string {
+	var conf = load_config_file(src + ".json")
+
+	if keyType == "public" {
+		return conf.Self_config.Publ_key
+	} else if keyType == "private" {
+		return conf.Self_config.Priv_key
+	} else {
+		log_msgs.ErrorLog("An error happened reading config file. RiP")
+		os.Exit(1)
+		return "Really need to find a better method of returning things :grimace:"
+	}
+}
+
 type self_config struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
 	Priv_key string `json:"priv_key"`
 	Publ_key string `json:"publ_key"`
 }
 type peer_config struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
 	Publ_key string `json:"publ_key"`
 }
 type config_pack struct {
@@ -57,6 +71,7 @@ type config_pack struct {
 type CONFIG_PACK interface {
 	debug_print()
 }
+
 func (self config_pack) debug_print() {
 	fmt.Println("SELF")
 	fmt.Println(self.Self_config.Name)
@@ -67,47 +82,44 @@ func (self config_pack) debug_print() {
 	fmt.Println(self.Peer_config.Name)
 	fmt.Println(self.Peer_config.Publ_key)
 }
-func load_config_file(filename string) (config_pack) {
+func load_config_file(filename string) config_pack {
 	var result config_pack
 
 	b, err := os.ReadFile(filename) // just pass the file name
-    if err != nil {
-        fmt.Print(err)
-    }
+	if err != nil {
+		fmt.Print(err)
+	}
 
-	json.Unmarshal(b, &result)		// unmarshal means convert to struct
+	json.Unmarshal(b, &result) // unmarshal means convert to struct
 
 	return result
 }
-func we_developing(){
+func we_developing() {
 	var config_file_name_1 = "bob.json"
 	var config_file_name_2 = "alice.json"
-	
+
 	var conn_pack_1 = load_config_file(config_file_name_1)
 	conn_pack_1.debug_print()
 
 	fmt.Print("\n\n")
 
-	var conn_pack_2 =  load_config_file(config_file_name_2)
+	var conn_pack_2 = load_config_file(config_file_name_2)
 	conn_pack_2.debug_print()
-	
+
 	os.Exit(1)
 }
 
-
-
-
 func Run(host string, port string, nameTarget string) {
 	//
-	we_developing()	// Gadget function for developing
+	// we_developing() // Gadget function for developing
 	//
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
-    conn, err := net.Dial("tcp", host+":"+port)
-    if err != nil {
-			log_msgs.ErrorLog("failed to connect")
-            os.Exit(1)
-    }
+	conn, err := net.Dial("tcp", host+":"+port)
+	if err != nil {
+		log_msgs.ErrorLog("failed to connect")
+		os.Exit(1)
+	}
 	// define name:target
 	log_msgs.InfoLog(nameTarget)
 	log_msgs.InfoLog("myname: " + strings.Split(nameTarget, ":")[0])
@@ -116,14 +128,14 @@ func Run(host string, port string, nameTarget string) {
 
 	go readFromServer(conn)
 
-    dir, err := os.Getwd()
+	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
 		Prompt:          global_prompt,
-		HistoryFile:     dir  + "/example.history",
+		HistoryFile:     dir + "/example.history",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
@@ -142,7 +154,7 @@ func Run(host string, port string, nameTarget string) {
 		line, err := l.Readline()
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
-				continue 					// disable ctrl+c
+				continue // disable ctrl+c
 				// break
 			} else {
 				continue
@@ -153,42 +165,42 @@ func Run(host string, port string, nameTarget string) {
 
 		line = strings.TrimSpace(line)
 		switch {
-			case line == "exit":
-				goto exit
-			case line == "help":
-                usage(l.Stderr())
-			case line == "status":
-				get_status(conn)
-            case line == "":
-            default:
-				var msg []byte
-				if (strings.Split(nameTarget, ":")[1] == "bob") {
-					// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
-					msg = encryption.Encryptor([]byte(line), alicePrivateKey, bobPublicKey) 
-				}
-				if (strings.Split(nameTarget, ":")[1] == "alice") {
-					// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-					msg = encryption.Encryptor([]byte(line), bobPrivateKey, alicePublicKey) // ORIGINAL
-				}
-				log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
-				var decrypted []byte
-				if (strings.Split(nameTarget, ":")[1] == "bob") {
-					// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-					decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)	
-				}
-				if (strings.Split(nameTarget, ":")[1] == "alice") {
-					// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-					decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)	
-				}
-				// encryption.Encryptor(line)
-				log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
-				network.SendMsg(conn, msg)
-                // writeToConn(conn, line)
+		case line == "exit":
+			goto exit
+		case line == "help":
+			usage(l.Stderr())
+		case line == "status":
+			get_status(conn)
+		case line == "":
+		default:
+			var msg []byte
+			if strings.Split(nameTarget, ":")[1] == "bob" {
+				// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
+				msg = encryption.Encryptor([]byte(line), alicePrivateKey, bobPublicKey)
+			}
+			if strings.Split(nameTarget, ":")[1] == "alice" {
+				// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+				msg = encryption.Encryptor([]byte(line), bobPrivateKey, alicePublicKey) // ORIGINAL
+			}
+			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
+			var decrypted []byte
+			if strings.Split(nameTarget, ":")[1] == "bob" {
+				// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+				decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)
+			}
+			if strings.Split(nameTarget, ":")[1] == "alice" {
+				// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
+				decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)
+			}
+			// encryption.Encryptor(line)
+			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
+			network.SendMsg(conn, msg)
+			// writeToConn(conn, line)
 		}
 	}
 exit:
-    // writeToConn(conn)
-    conn.Close()
+	// writeToConn(conn)
+	conn.Close()
 }
 
 func get_status(conn net.Conn) {
@@ -203,11 +215,10 @@ func get_status(conn net.Conn) {
 }
 
 func writeToConn(conn net.Conn, line string) {
-    var buffer = []byte(line + "\n")
+	var buffer = []byte(line + "\n")
 
-    conn.Write(buffer)
+	conn.Write(buffer)
 }
-
 
 func readFromServer(conn net.Conn) {
 	log_msgs.InfoLog("Reading from server!")
@@ -216,13 +227,13 @@ func readFromServer(conn net.Conn) {
 		var decrypted []byte
 		var whoIsThePrependedTag = bytes.Split(msg, []byte(": "))
 		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
-		if (string(whoIsThePrependedTag[0]) == "[bob]") {
+		if string(whoIsThePrependedTag[0]) == "[bob]" {
 			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)	
+			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)
 		}
-		if (string(whoIsThePrependedTag[0]) == "[alice]") {
+		if string(whoIsThePrependedTag[0]) == "[alice]" {
 			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)	
+			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)
 		}
 
 		fmt.Println("")
