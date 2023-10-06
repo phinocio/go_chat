@@ -1,14 +1,78 @@
 package encryption
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
-	"encoding/base64"
+
 	"github.com/cossacklabs/themis/gothemis/keys"
 	"github.com/cossacklabs/themis/gothemis/message"
 )
 
-func Gen_Keys() ( *keys.Keypair) {
+type self_config struct {
+	Name     string `json:"name"`
+	Priv_key string `json:"priv_key"`
+	Publ_key string `json:"publ_key"`
+}
+type peer_config struct {
+	Name     string `json:"name"`
+	Publ_key string `json:"publ_key"`
+}
+type config_pack struct {
+	Self_config self_config `json:"self"`
+	Peer_config peer_config `json:"peer"`
+}
+type CONFIG_PACK interface {
+	debug_print()
+}
+
+func (self config_pack) debug_print() {
+	fmt.Println("SELF")
+	fmt.Println(self.Self_config.Name)
+	fmt.Println(self.Self_config.Priv_key)
+	fmt.Println(self.Self_config.Publ_key)
+	fmt.Println("")
+	fmt.Println("PEER")
+	fmt.Println(self.Peer_config.Name)
+	fmt.Println(self.Peer_config.Publ_key)
+}
+
+func load_config_file(filename string) config_pack {
+	var result config_pack
+
+	b, err := os.ReadFile(filename) // just pass the file name
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	json.Unmarshal(b, &result) // unmarshal means convert to struct
+
+	return result
+}
+
+// This will eventually read the whole json and return an object matching the json
+// representation, allowing the client to then use clientKeys.PubKey, clientKeys.PeerPubKey
+// etc.
+// Limitation of thing outlined above is that it only supports a single peer, but #TODO :P
+func Load_Keys(src string) (*keys.PublicKey, *keys.PrivateKey) {
+	var conf = load_config_file(src + ".json")
+
+	b64Pub, _ := base64.StdEncoding.DecodeString(conf.Self_config.Publ_key)
+	b64Prv, _ := base64.StdEncoding.DecodeString(conf.Self_config.Priv_key)
+
+	var publicKey = &keys.PublicKey{
+		Value: b64Pub,
+	}
+
+	var privateKey = &keys.PrivateKey{
+		Value: b64Prv,
+	}
+
+	return publicKey, privateKey
+}
+
+func Gen_Keys() *keys.Keypair {
 	alice_keyPair, err := keys.New(keys.TypeEC)
 	if nil != err {
 		fmt.Println("Keypair generating error")
@@ -25,7 +89,7 @@ func Print_Keys(key_pair *keys.Keypair) {
 	fmt.Println()
 }
 
-func Encryptor(clear_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *keys.PublicKey) ([]byte) {
+func Encryptor(clear_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *keys.PublicKey) []byte {
 	aliceToBob := message.New(my_priv_key, peer_publ_key)
 	cipher_text, err := aliceToBob.Wrap(clear_text)
 	if err != nil {
@@ -34,7 +98,7 @@ func Encryptor(clear_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *k
 	return cipher_text
 }
 
-func Decryptor(cipher_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *keys.PublicKey) ([]byte) {
+func Decryptor(cipher_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *keys.PublicKey) []byte {
 	// we do not need the priv key to dec, the SecureMessage API is just misleading
 	bobToAlice := message.New(my_priv_key, peer_publ_key)
 	decrypted, err := bobToAlice.Unwrap(cipher_text)
@@ -44,4 +108,3 @@ func Decryptor(cipher_text []byte, my_priv_key *keys.PrivateKey, peer_publ_key *
 	}
 	return decrypted
 }
-

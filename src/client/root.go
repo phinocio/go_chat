@@ -12,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
-	"github.com/cossacklabs/themis/gothemis/keys"
 
 	"go_chat/src/utils/colors"
 	"go_chat/src/utils/encryption"
@@ -23,23 +22,28 @@ import (
 // Global Constants Avaiable to All go-routines
 var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
-var gosux, _ = base64.StdEncoding.DecodeString(load_key("alice", "public"))
-var alicePublicKey = &keys.PublicKey{
-	Value: gosux,
-}
-var gosux2, _ = base64.StdEncoding.DecodeString(load_key("alice", "private"))
-var alicePrivateKey = &keys.PrivateKey{
-	Value: gosux2,
-}
+// var gosux, _ = base64.StdEncoding.DecodeString(load_key("alice", "public"))
+// var alicePublicKey = &keys.PublicKey{
+// 	Value: gosux,
+// }
+// var gosux2, _ = base64.StdEncoding.DecodeString(load_key("alice", "private"))
+// var alicePrivateKey = &keys.PrivateKey{
+// 	Value: gosux2,
+// }
 
-var gosux3, _ = base64.StdEncoding.DecodeString(load_key("bob", "public"))
-var bobPublicKey = &keys.PublicKey{
-	Value: gosux3,
-}
-var gosux4, _ = base64.StdEncoding.DecodeString(load_key("bob", "private"))
-var bobPrivateKey = &keys.PrivateKey{
-	Value: gosux4,
-}
+// var gosux3, _ = base64.StdEncoding.DecodeString(load_key("bob", "public"))
+//
+//	var bobPublicKey = &keys.PublicKey{
+//		Value: gosux3,
+//	}
+//
+// var gosux4, _ = base64.StdEncoding.DecodeString(load_key("bob", "private"))
+//
+//	var bobPrivateKey = &keys.PrivateKey{
+//		Value: gosux4,
+//	}
+var alicePublicKey, alicePrivateKey = encryption.Load_Keys("alice")
+var bobPublicKey, bobPrivateKey = encryption.Load_Keys("bob")
 
 func load_key(src string, keyType string) string {
 	var conf = load_config_file(src + ".json")
@@ -112,7 +116,9 @@ func we_developing() {
 func Run(host string, port string, nameTarget string) {
 	//
 	// we_developing() // Gadget function for developing
+	// Get values from json, define client/peer and get keypairs.
 	//
+
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
 	conn, err := net.Dial("tcp", host+":"+port)
