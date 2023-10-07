@@ -19,6 +19,7 @@ func Run(host string, port string) {
 	ln, err := net.Listen("tcp4", host+":"+port)
 
 	if err != nil {
+		// log_msgs.ErrorLog(err.Error())
 		log_msgs.ErrorTimeLog(err.Error())
 	}
 
@@ -32,7 +33,8 @@ func Run(host string, port string) {
 		if err != nil {
 			log_msgs.ErrorLog("An error happened in the for loop" + err.Error())
 		}
-		log_msgs.InfoTimeLog("Connection received from: " + conn.RemoteAddr().String())
+		// log_msgs.InfoTimeLog("Connection received from: " + conn.RemoteAddr().String())
+		log_msgs.InfoLog("Connection received from: " + conn.RemoteAddr().String())
 		tmp := make([]byte, 256)
 		n, err := conn.Read(tmp)
 		var metaData = strings.Trim(string(tmp[:n]), "\n")
@@ -53,19 +55,20 @@ func handleConnection(client network.Connection) {
 func streamMessages(client network.Connection) {
 	for {
 		var msg = network.RecvMsg(client.Conn)
-		log_msgs.InfoLog("Base64 is: " + base64.StdEncoding.EncodeToString(msg))
 		for _, c := range clients {
 			if client.Peer == c.Name {
 				// c.Conn.Write([]byte(msg))
 				log_msgs.InfoLog("Sending msg from " + client.Name + " to " + c.Name )
-				msg = append([]byte("[" + client.Name + "]: "), msg[0:]...)
+				msg = append([]byte(client.Name + ":"), msg[0:]...)
 				network.SendMsg(c.Conn, msg)
 			}
 		}
+		log_msgs.InfoLog("Base64 of the payload: " + base64.StdEncoding.EncodeToString(msg))
 	}
 }
 
 func closeConnection(conn net.Conn) {
-	log_msgs.InfoTimeLog("Connection close from: " + conn.RemoteAddr().String())
+	// log_msgs.InfoTimeLog("Connection close from: " + conn.RemoteAddr().String())
+	log_msgs.InfoLog("Connection close from: " + conn.RemoteAddr().String())
 	conn.Close()
 }

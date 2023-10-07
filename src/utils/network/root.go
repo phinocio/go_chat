@@ -94,5 +94,5 @@ func SendMsg(target net.Conn, msg []byte) {
 		tmp = []byte(msg[start:end])
 		target.Write(tmp)
 	}
-	println()
+	// println()
 }

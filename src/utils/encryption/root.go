@@ -19,12 +19,12 @@ type Self_Config struct {
 }
 type Peer_Config struct {
 	Name     string `json:"name"`
-	Publ_key any
+	Publ_key string `json:"publ_key"`
 }
 
 type peer struct {
 	Name     string
-	Publ_key any
+	Publ_key *keys.PublicKey
 }
 
 type H8go struct {
@@ -91,16 +91,25 @@ func load_config_file(filename string) H8go {
 		Value: meow2,
 	}
 
-	tmp.Peers[0].Publ_key = &keys.PublicKey{
-		Value: meow3,
+	// buffeStruct stragey goes
+	// buffer
+	// fill buffer
+	// append to result.Peers[]
+	for _,v := range tmp.Peers {
+		// log_msgs.WarnLog( "k value is: " + fmt.Sprint(k) )	
+		// log_msgs.WarnLog( v.Name + " : " + v.Publ_key )
+		
+		meow3, _ := base64.StdEncoding.DecodeString(v.Publ_key)
+		var bufferStruct = peer {
+			Name: v.Name,
+			Publ_key: &keys.PublicKey{
+				Value: meow3,
+			},
+		}
+		result.Peers = append(result.Peers, bufferStruct)
 	}
-
-	result.Peers[0].Name = tmp.Peers[0].Name
-
-	meow3, _ := base64.StdEncoding.DecodeString(string(tmp.Peers[0].Publ_key))
-	result.Peers[0].Publ_key = &keys.PublicKey{
-		Value: meow3,
-	}
+	
+	
 
 	return result
 }
@@ -111,7 +120,8 @@ func load_config_file(filename string) H8go {
 // Limitation of thing outlined above is that it only supports a single peer, but #TODO :P
 func Load_Keys(src string) H8go {
 	var conf = load_config_file(src + ".json")
-	conf.debug_print()
+	
+	// conf.debug_print()
 
 	return conf
 }

@@ -25,7 +25,6 @@ var client_config encryption.H8go
 
 func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("client entry called")
-	log_msgs.InfoTimeLog("client entry called")
 	conn, err := net.Dial("tcp", host+":"+port)
 	if err != nil {
 		log_msgs.ErrorLog("failed to connect")
@@ -33,12 +32,16 @@ func Run(host string, port string, nameTarget string) {
 	}
 	// define name:target
 	log_msgs.InfoLog(nameTarget)
-	log_msgs.InfoLog("myname: " + strings.Split(nameTarget, ":")[0])
-	client_config = encryption.Load_Keys(strings.Split(nameTarget, ":")[0])
-	log_msgs.InfoLog("targetname: " + strings.Split(nameTarget, ":")[1])
+	var src_name = strings.Split(nameTarget, ":")[0]
+	var dst_name = strings.Split(nameTarget, ":")[1]
+	log_msgs.InfoLog("source is: " + src_name)
+	log_msgs.InfoLog("destination is: " + dst_name)
+	log_msgs.InfoLog("myname: " + src_name)
+	client_config = encryption.Load_Keys(src_name)
+	log_msgs.InfoLog("targetname: " + dst_name)
 	writeToConn(conn, nameTarget)
 
-	go readFromServer(conn)
+	go readFromServer(conn, dst_name, src_name)		// can we dynamically change dst_name?
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -46,7 +49,8 @@ func Run(host string, port string, nameTarget string) {
 	}
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
-		Prompt:          global_prompt,
+		// Prompt:          global_prompt,				// TODO, go back to this
+		Prompt:          "["+ src_name +"]> ",
 		HistoryFile:     dir + "/example.history",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
@@ -86,9 +90,14 @@ func Run(host string, port string, nameTarget string) {
 		case line == "":
 		default:
 			var msg []byte
-			msg = encryption.Encryptor([]byte(line), client_config.Priv_key, client_config.Peers[0].Publ_key)
-			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
-			network.SendMsg(conn, msg)
+			for _,v := range client_config.Peers {
+				if v.Name == dst_name {
+					msg = encryption.Encryptor([]byte(line), client_config.Priv_key, v.Publ_key)
+					network.SendMsg(conn, msg)
+					break
+				}
+			}
+			// log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
 		}
 	}
 exit:
@@ -111,18 +120,25 @@ func writeToConn(conn net.Conn, line string) {
 	conn.Write(buffer)
 }
 
-func readFromServer(conn net.Conn) {
+func readFromServer(conn net.Conn, dst_name string, src_name string) {
 	log_msgs.InfoLog("Reading from server!")
 	for {
 		var msg = network.RecvMsg(conn)
 		var decrypted []byte
-		var encMsg = bytes.Split(msg, []byte(": "))
-		decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, client_config.Peers[0].Publ_key)
+		var encMsg = bytes.Split(msg, []byte(":"))
+		for _,v := range client_config.Peers {
+			if v.Name == string(encMsg[0]) {
+				decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, v.Publ_key)
+				break
+			}
+		}
 		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(encMsg[1]))
 		fmt.Println("")
 		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
 		os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
-		os.Stderr.WriteString(global_prompt)
+		// os.Stderr.WriteString(global_prompt)
+		os.Stderr.WriteString("["+ src_name +"]> ")
+
 	}
 
 }

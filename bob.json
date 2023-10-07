@@ -6,6 +6,10 @@
     {
       "name": "alice",
       "publ_key": "VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm"
+    },
+    {
+      "name": "margaret",
+      "publ_key": "VUVDMgAAAC0E1fGqA9x67hsrHMDUAHGKoJoOgzgEM/IH5Dk0e+DMp3yebl8d"
     }
   ]
 }
