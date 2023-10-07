@@ -10,6 +10,8 @@ import (
 	"github.com/cossacklabs/themis/gothemis/message"
 )
 
+type Config struct{}
+
 type Self_Config struct {
 	Name     string `json:"name"`
 	Priv_key string `json:"priv_key"`
@@ -19,35 +21,71 @@ type Peer_Config struct {
 	Name     string `json:"name"`
 	Publ_key string `json:"publ_key"`
 }
-type Config_Pack struct {
-	Self_config Self_Config `json:"self"`
-	Peer_config Peer_Config `json:"peer"`
+
+type peer struct {
+	Name     string
+	Publ_key *keys.PublicKey
 }
 
-// type CONFIG_PACK interface {
-// 	debug_print()
-// }
+type H8go struct {
+	Name     string
+	Priv_key *keys.PrivateKey
+	Publ_key *keys.PublicKey
+	Peers    peer
+}
 
-// func (self Config_Pack) debug_print() {
-// 	fmt.Println("SELF")
-// 	fmt.Println(self.Self_config.Name)
-// 	fmt.Println(self.Self_config.Priv_key)
-// 	fmt.Println(self.Self_config.Publ_key)
-// 	fmt.Println("")
-// 	fmt.Println("PEER")
-// 	fmt.Println(self.Peer_config.Name)
-// 	fmt.Println(self.Peer_config.Publ_key)
-// }
+type Config_Pack struct {
+	Name        string
+	Priv_key    string `json:"priv_key"`
+	Publ_key    string `json:"publ_key"`
+	Peer_config Peer_Config
+}
 
-func load_config_file(filename string) Config_Pack {
-	var result Config_Pack
+type CONFIG_PACK interface {
+	debug_print()
+}
+
+func (self H8go) debug_print() {
+	fmt.Println("SELF")
+	fmt.Println(self.Name)
+	fmt.Println(self.Priv_key)
+	fmt.Println(self.Publ_key)
+	fmt.Println("")
+	fmt.Println("PEER")
+	fmt.Println(self.Peers.Name)
+	fmt.Println(self.Peers.Publ_key)
+}
+
+func load_config_file(filename string) H8go {
+	var tmp Config_Pack
+	var result H8go
 
 	b, err := os.ReadFile(filename) // just pass the file name
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	json.Unmarshal(b, &result) // unmarshal means convert to struct
+	json.Unmarshal(b, &tmp) // unmarshal means convert to struct
+
+	// Cursed af :puke:
+	result.Name = tmp.Name
+
+	meow, _ := base64.StdEncoding.DecodeString(tmp.Publ_key)
+	result.Publ_key = &keys.PublicKey{
+		Value: meow,
+	}
+
+	meow2, _ := base64.StdEncoding.DecodeString(tmp.Priv_key)
+	result.Priv_key = &keys.PrivateKey{
+		Value: meow2,
+	}
+
+	result.Peers.Name = tmp.Peer_config.Name
+
+	meow3, _ := base64.StdEncoding.DecodeString(tmp.Peer_config.Publ_key)
+	result.Peers.Publ_key = &keys.PublicKey{
+		Value: meow3,
+	}
 
 	return result
 }
@@ -56,21 +94,11 @@ func load_config_file(filename string) Config_Pack {
 // representation, allowing the client to then use clientKeys.PubKey, clientKeys.PeerPubKey
 // etc.
 // Limitation of thing outlined above is that it only supports a single peer, but #TODO :P
-func Load_Keys(src string) (*keys.PublicKey, *keys.PrivateKey) {
+func Load_Keys(src string) H8go {
 	var conf = load_config_file(src + ".json")
+	conf.debug_print()
 
-	b64Pub, _ := base64.StdEncoding.DecodeString(conf.Self_config.Publ_key)
-	b64Prv, _ := base64.StdEncoding.DecodeString(conf.Self_config.Priv_key)
-
-	var publicKey = &keys.PublicKey{
-		Value: b64Pub,
-	}
-
-	var privateKey = &keys.PrivateKey{
-		Value: b64Prv,
-	}
-
-	return publicKey, privateKey
+	return conf
 }
 
 func Gen_Keys() *keys.Keypair {

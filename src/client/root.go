@@ -41,8 +41,6 @@ var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 //	var bobPrivateKey = &keys.PrivateKey{
 //		Value: gosux4,
 //	}
-var alicePublicKey, alicePrivateKey = encryption.Load_Keys("alice")
-var bobPublicKey, bobPrivateKey = encryption.Load_Keys("bob")
 
 // func load_key(src string, keyType string) string {
 // 	var conf = load_config_file(src + ".json")
@@ -70,8 +68,9 @@ var bobPublicKey, bobPrivateKey = encryption.Load_Keys("bob")
 // 	var conn_pack_2 = load_config_file(config_file_name_2)
 // 	conn_pack_2.debug_print()
 
-// 	os.Exit(1)
-// }
+//		os.Exit(1)
+//	}
+var client_config encryption.H8go
 
 func Run(host string, port string, nameTarget string) {
 	//
@@ -89,6 +88,7 @@ func Run(host string, port string, nameTarget string) {
 	// define name:target
 	log_msgs.InfoLog(nameTarget)
 	log_msgs.InfoLog("myname: " + strings.Split(nameTarget, ":")[0])
+	client_config = encryption.Load_Keys(strings.Split(nameTarget, ":")[0])
 	log_msgs.InfoLog("targetname: " + strings.Split(nameTarget, ":")[1])
 	writeToConn(conn, nameTarget)
 
@@ -143,14 +143,14 @@ func Run(host string, port string, nameTarget string) {
 		default:
 
 			var msg []byte
-			if strings.Split(nameTarget, ":")[1] == "bob" {
-				// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
-				msg = encryption.Encryptor([]byte(line), alicePrivateKey, bobPublicKey)
-			}
-			if strings.Split(nameTarget, ":")[1] == "alice" {
-				// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-				msg = encryption.Encryptor([]byte(line), bobPrivateKey, alicePublicKey) // ORIGINAL
-			}
+			// if strings.Split(nameTarget, ":")[1] == "bob" {
+			// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
+			msg = encryption.Encryptor([]byte(line), client_config.Priv_key, client_config.Peers.Publ_key)
+			// }
+			// if strings.Split(nameTarget, ":")[1] == "alice" {
+			// 	// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+			// 	msg = encryption.Encryptor([]byte(line), keys., alicePublicKey) // ORIGINAL
+			// }
 			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
 
 			// var msg = encryption.Encryptor([]byte(line), client.PrivateKey, client.PeerPubKey)
@@ -196,16 +196,17 @@ func readFromServer(conn net.Conn) {
 	for {
 		var msg = network.RecvMsg(conn)
 		var decrypted []byte
-		var whoIsThePrependedTag = bytes.Split(msg, []byte(": "))
-		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(whoIsThePrependedTag[1]))
-		if string(whoIsThePrependedTag[0]) == "[bob]" {
-			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)
-		}
-		if string(whoIsThePrependedTag[0]) == "[alice]" {
-			// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-			decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)
-		}
+		var encMsg = bytes.Split(msg, []byte(": "))
+		decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, client_config.Peers.Publ_key)
+		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(encMsg[1]))
+		// if string(whoIsThePrependedTag[0]) == "[bob]" {
+		// 	// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+		// 	decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)
+		// }
+		// if string(whoIsThePrependedTag[0]) == "[alice]" {
+		// 	// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)	// ORIGINAL
+		// 	decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)
+		// }
 
 		fmt.Println("")
 		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")

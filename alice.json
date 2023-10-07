@@ -1,9 +1,7 @@
 {
-  "self": {
-    "name": "alice",
-    "priv_key": "UkVDMgAAAC2WXSbNAMNzZBCJCD7EjJhEnKeAPASMDKTBOySyXqOrAL4VbXVc",
-    "publ_key": "VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm"
-  },
+  "name": "alice",
+  "priv_key": "UkVDMgAAAC2WXSbNAMNzZBCJCD7EjJhEnKeAPASMDKTBOySyXqOrAL4VbXVc",
+  "publ_key": "VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm",
   "peer": {
     "name": "bob",
     "publ_key": "VUVDMgAAAC3+kngIAkAdHfaub4y5+VVHZglc/8+oJ7nBpwUpxvH4EOzuQCbS"
