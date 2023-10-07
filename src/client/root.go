@@ -92,8 +92,6 @@ func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("targetname: " + strings.Split(nameTarget, ":")[1])
 	writeToConn(conn, nameTarget)
 
-	encryption.Load_Keys(strings.Split(nameTarget, ":")[0])
-
 	go readFromServer(conn)
 
 	dir, err := os.Getwd()

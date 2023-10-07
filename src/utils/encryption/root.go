@@ -35,10 +35,10 @@ type H8go struct {
 }
 
 type Config_Pack struct {
-	Name        string
-	Priv_key    string `json:"priv_key"`
-	Publ_key    string `json:"publ_key"`
-	Peer_config Peer_Config
+	Name     string
+	Priv_key string `json:"priv_key"`
+	Publ_key string `json:"publ_key"`
+	Peers    Peer_Config
 }
 
 type CONFIG_PACK interface {
@@ -46,6 +46,17 @@ type CONFIG_PACK interface {
 }
 
 func (self H8go) debug_print() {
+	fmt.Println("SELF")
+	fmt.Println(self.Name)
+	fmt.Println(self.Priv_key)
+	fmt.Println(self.Publ_key)
+	fmt.Println("")
+	fmt.Println("PEER")
+	fmt.Println(self.Peers.Name)
+	fmt.Println(self.Peers.Publ_key)
+}
+
+func (self Config_Pack) debug_print() {
 	fmt.Println("SELF")
 	fmt.Println(self.Name)
 	fmt.Println(self.Priv_key)
@@ -80,9 +91,9 @@ func load_config_file(filename string) H8go {
 		Value: meow2,
 	}
 
-	result.Peers.Name = tmp.Peer_config.Name
+	result.Peers.Name = tmp.Peers.Name
 
-	meow3, _ := base64.StdEncoding.DecodeString(tmp.Peer_config.Publ_key)
+	meow3, _ := base64.StdEncoding.DecodeString(tmp.Peers.Publ_key)
 	result.Peers.Publ_key = &keys.PublicKey{
 		Value: meow3,
 	}
