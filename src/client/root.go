@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -45,73 +44,34 @@ var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 var alicePublicKey, alicePrivateKey = encryption.Load_Keys("alice")
 var bobPublicKey, bobPrivateKey = encryption.Load_Keys("bob")
 
-func load_key(src string, keyType string) string {
-	var conf = load_config_file(src + ".json")
+// func load_key(src string, keyType string) string {
+// 	var conf = load_config_file(src + ".json")
 
-	if keyType == "public" {
-		return conf.Self_config.Publ_key
-	} else if keyType == "private" {
-		return conf.Self_config.Priv_key
-	} else {
-		log_msgs.ErrorLog("An error happened reading config file. RiP")
-		os.Exit(1)
-		return "Really need to find a better method of returning things :grimace:"
-	}
-}
+// 	if keyType == "public" {
+// 		return conf.Self_config.Publ_key
+// 	} else if keyType == "private" {
+// 		return conf.Self_config.Priv_key
+// 	} else {
+// 		log_msgs.ErrorLog("An error happened reading config file. RiP")
+// 		os.Exit(1)
+// 		return "Really need to find a better method of returning things :grimace:"
+// 	}
+// }
 
-type self_config struct {
-	Name     string `json:"name"`
-	Priv_key string `json:"priv_key"`
-	Publ_key string `json:"publ_key"`
-}
-type peer_config struct {
-	Name     string `json:"name"`
-	Publ_key string `json:"publ_key"`
-}
-type config_pack struct {
-	Self_config self_config `json:"self"`
-	Peer_config peer_config `json:"peer"`
-}
-type CONFIG_PACK interface {
-	debug_print()
-}
+// func we_developing() {
+// 	var config_file_name_1 = "bob.json"
+// 	var config_file_name_2 = "alice.json"
 
-func (self config_pack) debug_print() {
-	fmt.Println("SELF")
-	fmt.Println(self.Self_config.Name)
-	fmt.Println(self.Self_config.Priv_key)
-	fmt.Println(self.Self_config.Publ_key)
-	fmt.Println("")
-	fmt.Println("PEER")
-	fmt.Println(self.Peer_config.Name)
-	fmt.Println(self.Peer_config.Publ_key)
-}
-func load_config_file(filename string) config_pack {
-	var result config_pack
+// 	var conn_pack_1 = load_config_file(config_file_name_1)
+// 	conn_pack_1.debug_print()
 
-	b, err := os.ReadFile(filename) // just pass the file name
-	if err != nil {
-		fmt.Print(err)
-	}
+// 	fmt.Print("\n\n")
 
-	json.Unmarshal(b, &result) // unmarshal means convert to struct
+// 	var conn_pack_2 = load_config_file(config_file_name_2)
+// 	conn_pack_2.debug_print()
 
-	return result
-}
-func we_developing() {
-	var config_file_name_1 = "bob.json"
-	var config_file_name_2 = "alice.json"
-
-	var conn_pack_1 = load_config_file(config_file_name_1)
-	conn_pack_1.debug_print()
-
-	fmt.Print("\n\n")
-
-	var conn_pack_2 = load_config_file(config_file_name_2)
-	conn_pack_2.debug_print()
-
-	os.Exit(1)
-}
+// 	os.Exit(1)
+// }
 
 func Run(host string, port string, nameTarget string) {
 	//
@@ -131,6 +91,8 @@ func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("myname: " + strings.Split(nameTarget, ":")[0])
 	log_msgs.InfoLog("targetname: " + strings.Split(nameTarget, ":")[1])
 	writeToConn(conn, nameTarget)
+
+	encryption.Load_Keys(strings.Split(nameTarget, ":")[0])
 
 	go readFromServer(conn)
 
@@ -179,6 +141,7 @@ func Run(host string, port string, nameTarget string) {
 			get_status(conn)
 		case line == "":
 		default:
+
 			var msg []byte
 			if strings.Split(nameTarget, ":")[1] == "bob" {
 				// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
@@ -189,17 +152,19 @@ func Run(host string, port string, nameTarget string) {
 				msg = encryption.Encryptor([]byte(line), bobPrivateKey, alicePublicKey) // ORIGINAL
 			}
 			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
-			var decrypted []byte
-			if strings.Split(nameTarget, ":")[1] == "bob" {
-				// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-				decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)
-			}
-			if strings.Split(nameTarget, ":")[1] == "alice" {
-				// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-				decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)
-			}
-			// encryption.Encryptor(line)
-			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
+
+			// var msg = encryption.Encryptor([]byte(line), client.PrivateKey, client.PeerPubKey)
+			// var decrypted []byte
+			// if strings.Split(nameTarget, ":")[1] == "bob" {
+			// 	// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
+			// 	decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)
+			// }
+			// if strings.Split(nameTarget, ":")[1] == "alice" {
+			// 	// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
+			// 	decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)
+			// }
+			// // encryption.Encryptor(line)
+			// log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
 			network.SendMsg(conn, msg)
 			// writeToConn(conn, line)
 		}

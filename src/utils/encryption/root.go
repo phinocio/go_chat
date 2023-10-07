@@ -10,36 +10,37 @@ import (
 	"github.com/cossacklabs/themis/gothemis/message"
 )
 
-type self_config struct {
+type Self_Config struct {
 	Name     string `json:"name"`
 	Priv_key string `json:"priv_key"`
 	Publ_key string `json:"publ_key"`
 }
-type peer_config struct {
+type Peer_Config struct {
 	Name     string `json:"name"`
 	Publ_key string `json:"publ_key"`
 }
-type config_pack struct {
-	Self_config self_config `json:"self"`
-	Peer_config peer_config `json:"peer"`
-}
-type CONFIG_PACK interface {
-	debug_print()
+type Config_Pack struct {
+	Self_config Self_Config `json:"self"`
+	Peer_config Peer_Config `json:"peer"`
 }
 
-func (self config_pack) debug_print() {
-	fmt.Println("SELF")
-	fmt.Println(self.Self_config.Name)
-	fmt.Println(self.Self_config.Priv_key)
-	fmt.Println(self.Self_config.Publ_key)
-	fmt.Println("")
-	fmt.Println("PEER")
-	fmt.Println(self.Peer_config.Name)
-	fmt.Println(self.Peer_config.Publ_key)
-}
+// type CONFIG_PACK interface {
+// 	debug_print()
+// }
 
-func load_config_file(filename string) config_pack {
-	var result config_pack
+// func (self Config_Pack) debug_print() {
+// 	fmt.Println("SELF")
+// 	fmt.Println(self.Self_config.Name)
+// 	fmt.Println(self.Self_config.Priv_key)
+// 	fmt.Println(self.Self_config.Publ_key)
+// 	fmt.Println("")
+// 	fmt.Println("PEER")
+// 	fmt.Println(self.Peer_config.Name)
+// 	fmt.Println(self.Peer_config.Publ_key)
+// }
+
+func load_config_file(filename string) Config_Pack {
+	var result Config_Pack
 
 	b, err := os.ReadFile(filename) // just pass the file name
 	if err != nil {
