@@ -21,63 +21,9 @@ import (
 // Global Constants Avaiable to All go-routines
 var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
-// var gosux, _ = base64.StdEncoding.DecodeString(load_key("alice", "public"))
-// var alicePublicKey = &keys.PublicKey{
-// 	Value: gosux,
-// }
-// var gosux2, _ = base64.StdEncoding.DecodeString(load_key("alice", "private"))
-// var alicePrivateKey = &keys.PrivateKey{
-// 	Value: gosux2,
-// }
-
-// var gosux3, _ = base64.StdEncoding.DecodeString(load_key("bob", "public"))
-//
-//	var bobPublicKey = &keys.PublicKey{
-//		Value: gosux3,
-//	}
-//
-// var gosux4, _ = base64.StdEncoding.DecodeString(load_key("bob", "private"))
-//
-//	var bobPrivateKey = &keys.PrivateKey{
-//		Value: gosux4,
-//	}
-
-// func load_key(src string, keyType string) string {
-// 	var conf = load_config_file(src + ".json")
-
-// 	if keyType == "public" {
-// 		return conf.Self_config.Publ_key
-// 	} else if keyType == "private" {
-// 		return conf.Self_config.Priv_key
-// 	} else {
-// 		log_msgs.ErrorLog("An error happened reading config file. RiP")
-// 		os.Exit(1)
-// 		return "Really need to find a better method of returning things :grimace:"
-// 	}
-// }
-
-// func we_developing() {
-// 	var config_file_name_1 = "bob.json"
-// 	var config_file_name_2 = "alice.json"
-
-// 	var conn_pack_1 = load_config_file(config_file_name_1)
-// 	conn_pack_1.debug_print()
-
-// 	fmt.Print("\n\n")
-
-// 	var conn_pack_2 = load_config_file(config_file_name_2)
-// 	conn_pack_2.debug_print()
-
-//		os.Exit(1)
-//	}
 var client_config encryption.H8go
 
 func Run(host string, port string, nameTarget string) {
-	//
-	// we_developing() // Gadget function for developing
-	// Get values from json, define client/peer and get keypairs.
-	//
-
 	log_msgs.InfoLog("client entry called")
 	log_msgs.InfoTimeLog("client entry called")
 	conn, err := net.Dial("tcp", host+":"+port)
@@ -139,36 +85,13 @@ func Run(host string, port string, nameTarget string) {
 			get_status(conn)
 		case line == "":
 		default:
-
 			var msg []byte
-			// if strings.Split(nameTarget, ":")[1] == "bob" {
-			// msg = encryption.Encryptor([]byte(line), aliceKeys.Private, bobKeys.Public) // ORIGINAL
 			msg = encryption.Encryptor([]byte(line), client_config.Priv_key, client_config.Peers.Publ_key)
-			// }
-			// if strings.Split(nameTarget, ":")[1] == "alice" {
-			// 	// msg = encryption.Encryptor([]byte(line), bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-			// 	msg = encryption.Encryptor([]byte(line), keys., alicePublicKey) // ORIGINAL
-			// }
 			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
-
-			// var msg = encryption.Encryptor([]byte(line), client.PrivateKey, client.PeerPubKey)
-			// var decrypted []byte
-			// if strings.Split(nameTarget, ":")[1] == "bob" {
-			// 	// decrypted = encryption.Decryptor(msg, bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-			// 	decrypted = encryption.Decryptor(msg, bobPrivateKey, alicePublicKey)
-			// }
-			// if strings.Split(nameTarget, ":")[1] == "alice" {
-			// 	// decrypted = encryption.Decryptor(msg, aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-			// 	decrypted = encryption.Decryptor(msg, alicePrivateKey, bobPublicKey)
-			// }
-			// // encryption.Encryptor(line)
-			// log_msgs.InfoLog(base64.StdEncoding.EncodeToString(decrypted))
 			network.SendMsg(conn, msg)
-			// writeToConn(conn, line)
 		}
 	}
 exit:
-	// writeToConn(conn)
 	conn.Close()
 }
 
@@ -177,7 +100,6 @@ func get_status(conn net.Conn) {
 	var remote_addr = remote_infos[0]
 	var remote_port = remote_infos[1]
 	fmt.Println()
-	// fmt.Println("You are connected to:")
 	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tAddr: ") + remote_addr)
 	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tPort: ") + remote_port)
 	fmt.Println()
@@ -197,15 +119,6 @@ func readFromServer(conn net.Conn) {
 		var encMsg = bytes.Split(msg, []byte(": "))
 		decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, client_config.Peers.Publ_key)
 		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(encMsg[1]))
-		// if string(whoIsThePrependedTag[0]) == "[bob]" {
-		// 	// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobKeys.Private, aliceKeys.Public)	// ORIGINAL
-		// 	decrypted = encryption.Decryptor(whoIsThePrependedTag[1], bobPrivateKey, alicePublicKey)
-		// }
-		// if string(whoIsThePrependedTag[0]) == "[alice]" {
-		// 	// decrypted = encryption.Decryptor(whoIsThePrependedTag[1], aliceKeys.Private, bobKeys.Public)	// ORIGINAL
-		// 	decrypted = encryption.Decryptor(whoIsThePrependedTag[1], alicePrivateKey, bobPublicKey)
-		// }
-
 		fmt.Println("")
 		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
 		os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
