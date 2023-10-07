@@ -86,7 +86,7 @@ func Run(host string, port string, nameTarget string) {
 		case line == "":
 		default:
 			var msg []byte
-			msg = encryption.Encryptor([]byte(line), client_config.Priv_key, client_config.Peers.Publ_key)
+			msg = encryption.Encryptor([]byte(line), client_config.Priv_key, client_config.Peers[0].Publ_key)
 			log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
 			network.SendMsg(conn, msg)
 		}
@@ -117,7 +117,7 @@ func readFromServer(conn net.Conn) {
 		var msg = network.RecvMsg(conn)
 		var decrypted []byte
 		var encMsg = bytes.Split(msg, []byte(": "))
-		decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, client_config.Peers.Publ_key)
+		decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, client_config.Peers[0].Publ_key)
 		log_msgs.InfoLog(base64.StdEncoding.EncodeToString(encMsg[1]))
 		fmt.Println("")
 		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
