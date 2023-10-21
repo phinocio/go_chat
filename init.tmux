@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LD_LIBRARY_PATH=/usr/local/lib
+
 SESSION_NAME="go_chat_dev"
 tmux new-session -s $SESSION_NAME -d
 #tmux split-window -h -d
