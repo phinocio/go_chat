@@ -2,10 +2,11 @@
 
 SESSION_NAME="go_chat_dev"
 tmux new-session -s $SESSION_NAME -d
-tmux split-window -h -d
-tmux split-window -v -d
+#tmux split-window -h -d
+#tmux split-window -v -d
 
-tmux rename-window -t $SESSION_NAME:0 "exec code"
+PRIMARY_WINDOW_NAME="exec_code"
+tmux rename-window -t $SESSION_NAME:0 $PRIMARY_WINDOW_NAME
 
 send_str() {
 	STRING=$1
@@ -24,11 +25,13 @@ send_key C-l
 
 # configure windows
 send_str "go run main.go client 127.0.0.1 9001 alice:bob"
-tmux select-pane -t 1
-send_str "go run main.go client 127.0.0.1 9001 bob:alice"
-tmux select-pane -t 2
+#tmux select-pane -t 1
+tmux split-window -h 
 send_str "go run main.go server 127.0.0.1 9001"
-
+tmux select-pane -l
+tmux split-window -v 
+send_str "go run main.go client 127.0.0.1 9001 bob:alice"
+tmux select-pane -R
 # connect to session
 tmux attach -t $SESSION_NAME
 
