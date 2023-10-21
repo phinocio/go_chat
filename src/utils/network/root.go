@@ -11,9 +11,8 @@ import (
 
 const (
 	NumChunksByteSize = 8
-	ChunkSize = 1500
-	MaxChunks = 50
-
+	ChunkSize         = 1500
+	MaxChunks         = 50
 )
 
 type Connection struct {
@@ -71,9 +70,9 @@ func SendMsg(target net.Conn, msg []byte) {
 	if chunks > MaxChunks {
 		log_msgs.ErrorLog("Msg too long bro. Got " + fmt.Sprint(chunks) + " chunks, expected max of " + fmt.Sprint(MaxChunks))
 		return
-	} 
+	}
 	//else {
-		// log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
+	// log_msgs.InfoLog("Got " + fmt.Sprint(chunks) + " chunks")
 	//}
 
 	// Send number of chunks
@@ -82,7 +81,7 @@ func SendMsg(target net.Conn, msg []byte) {
 
 	for i := 0; i < chunks; i++ {
 		var start = i * ChunkSize
-		var end = (i + 1 ) * ChunkSize
+		var end = (i + 1) * ChunkSize
 		var remainingLen = len(msg[start:])
 		if remainingLen > ChunkSize {
 			end = (i + 1) * ChunkSize
