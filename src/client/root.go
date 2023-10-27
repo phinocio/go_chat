@@ -3,6 +3,7 @@ package client
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +24,67 @@ var global_prompt = colors.ColorWrap(colors.Purple, "[go_chat]> ")
 
 var client_config encryption.H8go
 
+// TODO: Extract bootstrap and code creation out of client into other modules/functions
+func bootstrap(src_name string) {
+	// create $XDG_CONFIG_HOME/go_chat if doesn't exist
+	// create and store json file skeleton
+	log_msgs.InfoLog("Bootstrapping client by creating directory...")
+
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		log_msgs.ErrorLog("Error fetching user config directory")
+		log.Fatal(err)
+	}
+	confDir += "/go_chat"
+
+	if _, err := os.Stat(confDir); err != nil {
+		if os.IsNotExist(err) {
+			err := os.Mkdir(confDir, 0700)
+			if err != nil {
+				log_msgs.ErrorLog("Error creating go_chat directory")
+				log.Fatal(err)
+			}
+		} else {
+			log_msgs.ErrorLog("An error occurred checking if go_chat directory exists.")
+			log.Fatal(err)
+		}
+	}
+
+	// json skeleton
+	// TODO: priv/pub key need to be generated on fly if file doesn't already exist.
+	var userConfigFile = src_name + ".json"
+
+	var fullConfigFilePath = confDir + "/" + userConfigFile
+
+	if _, err := os.Stat(fullConfigFilePath); err != nil {
+		if os.IsNotExist(err) {
+			data := map[string]interface{}{
+				"name":     src_name,
+				"priv_key": "UkVDMgAAAC2WXSbNAMNzZBCJCD7EjJhEnKeAPASMDKTBOySyXqOrAL4VbXVc",
+				"publ_key": "VUVDMgAAAC0VZx8oAzXCDUmNAD5oQAEqkxvxjpajjozZ+++FZzfxMeHDbvzm",
+				"peers":    map[string]interface{}{},
+			}
+
+			jsonData, err := json.Marshal(data)
+			if err != nil {
+				fmt.Printf("could not marshal json: %s\n", err)
+				return
+			}
+			fmt.Printf("json data: %s\n", jsonData)
+
+			err2 := os.WriteFile(fullConfigFilePath, []byte(jsonData), 0600)
+			if err2 != nil {
+				log.Fatal(err)
+			}
+		} else {
+			log_msgs.ErrorLog("An error occurred checking if go_chat directory exists.")
+			log.Fatal(err)
+		}
+	}
+
+	log_msgs.InfoLog("Bootstrapping compelted...")
+}
+
 func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("client entry called")
 	conn, err := net.Dial("tcp", host+":"+port)
@@ -39,9 +101,10 @@ func Run(host string, port string, nameTarget string) {
 	log_msgs.InfoLog("myname: " + src_name)
 	client_config = encryption.Load_Keys(src_name)
 	log_msgs.InfoLog("targetname: " + dst_name)
+	bootstrap(src_name)
 	writeToConn(conn, nameTarget)
 
-	go readFromServer(conn, dst_name, src_name)		// can we dynamically change dst_name?
+	go readFromServer(conn, dst_name, src_name) // can we dynamically change dst_name?
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -50,7 +113,7 @@ func Run(host string, port string, nameTarget string) {
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
 		// Prompt:          global_prompt,				// TODO, go back to this
-		Prompt:          "["+ src_name +"]> ",
+		Prompt:          "[" + src_name + "]> ",
 		HistoryFile:     dir + "/example.history",
 		AutoComplete:    completer,
 		InterruptPrompt: "^C",
@@ -90,7 +153,7 @@ func Run(host string, port string, nameTarget string) {
 		case line == "":
 		default:
 			var msg []byte
-			for _,v := range client_config.Peers {
+			for _, v := range client_config.Peers {
 				if v.Name == dst_name {
 					msg = encryption.Encryptor([]byte(line), client_config.Priv_key, v.Publ_key)
 					network.SendMsg(conn, msg)
@@ -126,7 +189,7 @@ func readFromServer(conn net.Conn, dst_name string, src_name string) {
 		var msg = network.RecvMsg(conn)
 		var decrypted []byte
 		var encMsg = bytes.Split(msg, []byte(":"))
-		for _,v := range client_config.Peers {
+		for _, v := range client_config.Peers {
 			if v.Name == string(encMsg[0]) {
 				decrypted = encryption.Decryptor(encMsg[1], client_config.Priv_key, v.Publ_key)
 				break
@@ -137,7 +200,7 @@ func readFromServer(conn net.Conn, dst_name string, src_name string) {
 		log_msgs.InfoLog("Msg from " + conn.RemoteAddr().String() + ": ")
 		os.Stderr.WriteString("\n" + string(decrypted) + "\n\n")
 		// os.Stderr.WriteString(global_prompt)
-		os.Stderr.WriteString("["+ src_name +"]> ")
+		os.Stderr.WriteString("[" + src_name + "]> ")
 
 	}
 
