@@ -33,6 +33,25 @@ type H8go struct {
 	Publ_key *keys.PublicKey
 	Peers    []peer
 }
+func (self H8go) debug_print() {
+	fmt.Println("SELF")
+	fmt.Println(self.Name)
+	fmt.Println(self.Priv_key)
+	fmt.Println(self.Publ_key)
+	fmt.Println("")
+	fmt.Println("PEER")
+	fmt.Println(self.Peers[0].Name)
+	fmt.Println(self.Peers[0].Publ_key)
+}
+func (self H8go) Peer_exists(peer string) bool{
+	for _,v := range self.Peers {
+		if peer == v.Name {
+			return true
+		}		
+	}
+	return false
+}
+
 
 type Config_Pack struct {
 	Name     string
@@ -44,18 +63,6 @@ type Config_Pack struct {
 type CONFIG_PACK interface {
 	debug_print()
 }
-
-func (self H8go) debug_print() {
-	fmt.Println("SELF")
-	fmt.Println(self.Name)
-	fmt.Println(self.Priv_key)
-	fmt.Println(self.Publ_key)
-	fmt.Println("")
-	fmt.Println("PEER")
-	fmt.Println(self.Peers[0].Name)
-	fmt.Println(self.Peers[0].Publ_key)
-}
-
 func (self Config_Pack) debug_print() {
 	fmt.Println("SELF")
 	fmt.Println(self.Name)

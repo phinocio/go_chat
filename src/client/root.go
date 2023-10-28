@@ -12,6 +12,7 @@ import (
 
 	"github.com/chzyer/readline"
 
+	"go_chat/src/client/command"
 	"go_chat/src/utils/colors"
 	"go_chat/src/utils/encryption"
 	"go_chat/src/utils/log_msgs"
@@ -47,6 +48,7 @@ func Run(host string, port string, nameTarget string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
 		// Prompt:          global_prompt,				// TODO, go back to this
@@ -80,38 +82,34 @@ func Run(host string, port string, nameTarget string) {
 		}
 
 		line = strings.TrimSpace(line)
+		cmd, args, _ := strings.Cut(line, " ")
 		switch {
-		case line == "exit":
-			goto exit
-		case line == "help":
-			usage(l.Stderr())
-		case line == "status":
-			get_status(conn)
-		case line == "":
-		default:
-			var msg []byte
-			for _,v := range client_config.Peers {
-				if v.Name == dst_name {
-					msg = encryption.Encryptor([]byte(line), client_config.Priv_key, v.Publ_key)
-					network.SendMsg(conn, msg)
-					break
+			case cmd == "exit":
+				goto exit
+			case cmd == "help":
+				usage(l.Stderr())
+			case cmd == "status":
+				command.Status(conn, dst_name)
+				// command.status_command(conn, dst_name)
+			case cmd == "peer":
+				var dst_ptr *string
+				dst_ptr = &dst_name
+				command.Peer(args, client_config, dst_ptr)
+			case cmd == "":
+			default:
+				var msg []byte
+				for _,v := range client_config.Peers {
+					if v.Name == dst_name {
+						msg = encryption.Encryptor([]byte(line), client_config.Priv_key, v.Publ_key)
+						network.SendMsg(conn, msg)
+						break
+					}
 				}
+				// log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
 			}
-			// log_msgs.InfoLog(base64.StdEncoding.EncodeToString(msg))
-		}
 	}
 exit:
 	conn.Close()
-}
-
-func get_status(conn net.Conn) {
-	var remote_infos = strings.Split(conn.RemoteAddr().String(), ":")
-	var remote_addr = remote_infos[0]
-	var remote_port = remote_infos[1]
-	fmt.Println()
-	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tAddr: ") + remote_addr)
-	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tPort: ") + remote_port)
-	fmt.Println()
 }
 
 func writeToConn(conn net.Conn, line string) {
@@ -154,8 +152,24 @@ var completer = readline.NewPrefixCompleter(
 	readline.PcItem("exit"),
 	readline.PcItem("help"),
 	readline.PcItem("status"),
+	readline.PcItem("peer",
+		readline.PcItem("list"),
+		readline.PcItem(
+			"swap",
+			readline.PcItemDynamic(listFiles("./")),		// requires finalizing our desing of config packs & homedir stuff
+		),
+	),
 )
-
+func listFiles(path string) func(string) []string {
+	return func(line string) []string {
+		names := make([]string, 0)
+		files, _ := os.ReadDir(path)
+		for _, f := range files {
+			names = append(names, f.Name())
+		}
+		return names
+	}
+}
 func filterInput(r rune) (rune, bool) {
 	switch r {
 	// block CtrlZ feature
