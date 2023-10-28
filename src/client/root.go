@@ -13,6 +13,7 @@ import (
 
 	"github.com/chzyer/readline"
 
+	"go_chat/src/client/command"
 	"go_chat/src/utils/colors"
 	"go_chat/src/utils/encryption"
 	"go_chat/src/utils/log_msgs"
@@ -110,12 +111,14 @@ func Run(host string, port string, nameTarget string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	l, err := readline.NewEx(&readline.Config{
 		// Prompt:          "\033[31m»\033[0m ",
 		// Prompt:          global_prompt,				// TODO, go back to this
-		Prompt:          "[" + src_name + "]> ",
-		HistoryFile:     dir + "/example.history",
-		AutoComplete:    completer,
+		Prompt:      "[" + src_name + "]> ",
+		HistoryFile: dir + "/example.history",
+		// AutoComplete:    completer,
+		AutoComplete:    buildCompleter(client_config),
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 
@@ -143,14 +146,20 @@ func Run(host string, port string, nameTarget string) {
 		}
 
 		line = strings.TrimSpace(line)
+		cmd, args, _ := strings.Cut(line, " ")
 		switch {
-		case line == "exit":
+		case cmd == "exit":
 			goto exit
-		case line == "help":
-			usage(l.Stderr())
-		case line == "status":
-			get_status(conn)
-		case line == "":
+		case cmd == "help":
+			usage(l.Stderr(), client_config)
+		case cmd == "status":
+			command.Status(conn, dst_name)
+			// command.status_command(conn, dst_name)
+		case cmd == "peer":
+			var dst_ptr *string
+			dst_ptr = &dst_name
+			command.Peer(args, client_config, dst_ptr)
+		case cmd == "":
 		default:
 			var msg []byte
 			for _, v := range client_config.Peers {
@@ -165,16 +174,6 @@ func Run(host string, port string, nameTarget string) {
 	}
 exit:
 	conn.Close()
-}
-
-func get_status(conn net.Conn) {
-	var remote_infos = strings.Split(conn.RemoteAddr().String(), ":")
-	var remote_addr = remote_infos[0]
-	var remote_port = remote_infos[1]
-	fmt.Println()
-	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tAddr: ") + remote_addr)
-	fmt.Println(colors.ColorWrap(colors.LightBlue, "\tPort: ") + remote_port)
-	fmt.Println()
 }
 
 func writeToConn(conn net.Conn, line string) {
@@ -206,19 +205,28 @@ func readFromServer(conn net.Conn, dst_name string, src_name string) {
 
 }
 
-func usage(w io.Writer) {
+func usage(w io.Writer, client_config encryption.H8go) {
 	io.WriteString(w, "\ndefault behavior is to take input and write it to the server\n\n")
 	io.WriteString(w, "commands:\n")
-	io.WriteString(w, completer.Tree("    "))
+	io.WriteString(w, buildCompleter(client_config).Tree("    "))
 	io.WriteString(w, "\n")
 }
 
-var completer = readline.NewPrefixCompleter(
-	readline.PcItem("exit"),
-	readline.PcItem("help"),
-	readline.PcItem("status"),
-)
-
+func buildCompleter(client_config encryption.H8go) *readline.PrefixCompleter {
+	var completer = readline.NewPrefixCompleter(
+		readline.PcItem("exit"),
+		readline.PcItem("help"),
+		readline.PcItem("status"),
+		readline.PcItem("peer",
+			readline.PcItem("list"),
+			readline.PcItem(
+				"swap",
+				readline.PcItemDynamic(client_config.GetPeerArrayGetter()),
+			),
+		),
+	)
+	return completer
+}
 func filterInput(r rune) (rune, bool) {
 	switch r {
 	// block CtrlZ feature
