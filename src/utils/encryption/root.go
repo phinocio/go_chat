@@ -4,6 +4,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"go_chat/src/utils/log_msgs"
+	"log"
 	"os"
 
 	"github.com/cossacklabs/themis/gothemis/keys"
@@ -71,6 +73,15 @@ func load_config_file(filename string) H8go {
 	var tmp Config_Pack
 	var result H8go
 
+	confDir, err := os.UserConfigDir()
+	if err != nil {
+		log_msgs.ErrorLog("Error fetching user config directory")
+		log.Fatal(err)
+	}
+
+	// Read the file from $XDG_CONFIG_DIR/go_chat/$name.json
+	filename = confDir + "/go_chat/" + filename
+
 	b, err := os.ReadFile(filename) // just pass the file name
 	if err != nil {
 		fmt.Print(err)
@@ -95,12 +106,12 @@ func load_config_file(filename string) H8go {
 	// buffer
 	// fill buffer
 	// append to result.Peers[]
-	for _,v := range tmp.Peers {
-		// log_msgs.WarnLog( "k value is: " + fmt.Sprint(k) )	
+	for _, v := range tmp.Peers {
+		// log_msgs.WarnLog( "k value is: " + fmt.Sprint(k) )
 		// log_msgs.WarnLog( v.Name + " : " + v.Publ_key )
-		
+
 		meow3, _ := base64.StdEncoding.DecodeString(v.Publ_key)
-		var bufferStruct = peer {
+		var bufferStruct = peer{
 			Name: v.Name,
 			Publ_key: &keys.PublicKey{
 				Value: meow3,
@@ -108,8 +119,6 @@ func load_config_file(filename string) H8go {
 		}
 		result.Peers = append(result.Peers, bufferStruct)
 	}
-	
-	
 
 	return result
 }
@@ -120,7 +129,7 @@ func load_config_file(filename string) H8go {
 // Limitation of thing outlined above is that it only supports a single peer, but #TODO :P
 func Load_Keys(src string) H8go {
 	var conf = load_config_file(src + ".json")
-	
+
 	// conf.debug_print()
 
 	return conf
