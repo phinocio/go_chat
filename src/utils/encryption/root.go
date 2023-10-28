@@ -51,7 +51,17 @@ func (self H8go) Peer_exists(peer string) bool{
 	}
 	return false
 }
+func (self H8go) GetPeerArrayGetter() func(string) []string{
+	return func(string) []string {
+		result := make([]string, len(self.Peers))
 
+		for k,v := range self.Peers {
+			result[k] = v.Name
+		}
+
+		return result
+	}
+}
 
 type Config_Pack struct {
 	Name     string

@@ -54,7 +54,8 @@ func Run(host string, port string, nameTarget string) {
 		// Prompt:          global_prompt,				// TODO, go back to this
 		Prompt:          "["+ src_name +"]> ",
 		HistoryFile:     dir + "/example.history",
-		AutoComplete:    completer,
+		// AutoComplete:    completer,
+		AutoComplete:    buildCompleter(client_config),
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 
@@ -87,7 +88,7 @@ func Run(host string, port string, nameTarget string) {
 			case cmd == "exit":
 				goto exit
 			case cmd == "help":
-				usage(l.Stderr())
+				usage(l.Stderr(), client_config)
 			case cmd == "status":
 				command.Status(conn, dst_name)
 				// command.status_command(conn, dst_name)
@@ -141,34 +142,27 @@ func readFromServer(conn net.Conn, dst_name string, src_name string) {
 
 }
 
-func usage(w io.Writer) {
+func usage(w io.Writer, client_config encryption.H8go) {
 	io.WriteString(w, "\ndefault behavior is to take input and write it to the server\n\n")
 	io.WriteString(w, "commands:\n")
-	io.WriteString(w, completer.Tree("    "))
+	io.WriteString(w, buildCompleter(client_config).Tree("    "))
 	io.WriteString(w, "\n")
 }
 
-var completer = readline.NewPrefixCompleter(
-	readline.PcItem("exit"),
-	readline.PcItem("help"),
-	readline.PcItem("status"),
-	readline.PcItem("peer",
-		readline.PcItem("list"),
-		readline.PcItem(
-			"swap",
-			readline.PcItemDynamic(listFiles("./")),		// requires finalizing our desing of config packs & homedir stuff
+func buildCompleter(client_config encryption.H8go) (*readline.PrefixCompleter){
+	var completer = readline.NewPrefixCompleter(
+		readline.PcItem("exit"),
+		readline.PcItem("help"),
+		readline.PcItem("status"),
+		readline.PcItem("peer",
+			readline.PcItem("list"),
+			readline.PcItem(
+				"swap",
+				readline.PcItemDynamic( client_config.GetPeerArrayGetter() ),
+			),
 		),
-	),
-)
-func listFiles(path string) func(string) []string {
-	return func(line string) []string {
-		names := make([]string, 0)
-		files, _ := os.ReadDir(path)
-		for _, f := range files {
-			names = append(names, f.Name())
-		}
-		return names
-	}
+	)
+	return completer
 }
 func filterInput(r rune) (rune, bool) {
 	switch r {
